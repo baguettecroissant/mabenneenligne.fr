@@ -1,0 +1,8 @@
+{
+  "source": "https://geo.api.gouv.fr/communes?fields=nom,code,codesPostaux,codeDepartement,codeRegion,population,centre&format=json&geometry=centre",
+  "updatedAt": "2026-07-21T14:14:48.625Z",
+  "scope": "France métropolitaine (DOM-TOM exclus)",
+  "cityCount": 34746,
+  "departmentCount": 96,
+  "regionCount": 13
+}

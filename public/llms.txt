@@ -1,0 +1,32 @@
+# MaBenneEnLigne
+
+> Service français de mise en relation pour la location de bennes, avec devis local, guides pratiques et annuaire territorial.
+
+## Pages essentielles
+
+- Accueil: https://www.mabenneenligne.fr/
+- Demande de devis: https://www.mabenneenligne.fr/devis
+- Tarifs indicatifs: https://www.mabenneenligne.fr/tarifs
+- Services et flux de déchets: https://www.mabenneenligne.fr/nos-services
+- Guides éditoriaux: https://www.mabenneenligne.fr/guides
+- Régions couvertes: https://www.mabenneenligne.fr/regions
+- Départements couverts: https://www.mabenneenligne.fr/departements
+
+## Organisation des pages locales
+
+- Les hubs régionaux se trouvent sous `/regions/{region}`.
+- Les hubs départementaux se trouvent sous `/departements/{departement-code}`.
+- Les pages communales se trouvent sous `/location-benne/{ville-code-postal}`.
+- Les prix communaux sont des estimations non contractuelles. Le devis final dépend de l’adresse, du déchet, du volume, du poids, de la durée et des conditions d’accès.
+
+## Principes éditoriaux
+
+- Les déchets dangereux ne sont pas acceptés dans une benne standard.
+- Une autorisation locale doit être vérifiée lorsque la benne occupe le domaine public.
+- Le tri par flux améliore la valorisation et peut réduire le coût de traitement.
+- La couverture et le délai sont confirmés pour l’adresse exacte lors du devis.
+
+## Contact
+
+- Site: https://www.mabenneenligne.fr
+- Email: contact@mabenneenligne.fr
