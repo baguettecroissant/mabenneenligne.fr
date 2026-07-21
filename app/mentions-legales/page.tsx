@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LegalPage() {
   return <SiteShell><PageHero eyebrow="Informations légales" title="Mentions légales" text="Les informations d’identification et les règles applicables à l’utilisation du site mabenneenligne.fr." /><article className="content-section"><div className="container legal">
-    <p><strong>Dernière mise à jour : 21 juillet 2026.</strong></p>
+    <p><strong>Dernière mise à jour : 21 juillet 2026.</strong> Cette version remplace toute version antérieure publiée sur le site.</p>
     <h2>1. Éditeur du site</h2>
     <p>Le site <strong>mabenneenligne.fr</strong> est exploité sous la marque MaBenneEnLigne par :</p>
     <p><strong>WADE STUDIO LTD</strong><br />Private Company Limited by Shares<br />432 Ave Bounty, Morcellement Balaclava, Mauritius<br />N° d’immatriculation : C227533<br />Directeur de la publication : WADE STUDIO LTD<br />Contact : <a href="mailto:contact@mabenneenligne.fr">contact@mabenneenligne.fr</a></p>
