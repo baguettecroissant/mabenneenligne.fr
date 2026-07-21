@@ -44,6 +44,30 @@ test("ships production metadata and generated assets", async () => {
   assert.ok(root);
 });
 
+test("ships indexation essentials with self-referencing canonical URLs", async () => {
+  const [robotsResponse, homeResponse, contactResponse, legalResponse] = await Promise.all([
+    request("/robots.txt"),
+    render("/"),
+    render("/contact"),
+    render("/mentions-legales"),
+  ]);
+  assert.equal(robotsResponse.status, 200);
+  assert.match(await robotsResponse.text(), /Sitemap: https:\/\/www\.mabenneenligne\.fr\/sitemap\.xml/);
+  for (const [response, canonical] of [[homeResponse, "https://www.mabenneenligne.fr/"], [contactResponse, "https://www.mabenneenligne.fr/contact"], [legalResponse, "https://www.mabenneenligne.fr/mentions-legales"]]) {
+    const html = await response.text();
+    assert.equal(response.status, 200);
+    assert.match(html, new RegExp(`<link rel="canonical" href="${canonical}"`));
+  }
+  await access(new URL("../public/favicon.png", import.meta.url));
+});
+
+test("uses e-mail and forms as the public contact channels", async () => {
+  const [homeResponse, contactResponse] = await Promise.all([render("/"), render("/contact")]);
+  const html = `${await homeResponse.text()}${await contactResponse.text()}`;
+  assert.doesNotMatch(html, /tel:|01 89 00 00 00/i);
+  assert.match(html, /contact@mabenneenligne\.fr/);
+});
+
 test("renders a complete expert guide with visible evidence and structured data", async () => {
   const response = await render("/guides/choisir-taille-benne");
   assert.equal(response.status, 200);

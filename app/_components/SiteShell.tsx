@@ -21,14 +21,14 @@ export function Logo({ light = false }: { light?: boolean }) {
 export function Header() {
   return (
     <header className="site-header">
-      <div className="topbar"><div className="container topbar-inner"><span>Livraison sous 24 à 48h</span><span>Service client du lundi au samedi</span><span>Paiement 100% sécurisé</span></div></div>
+      <div className="topbar"><div className="container topbar-inner"><span>Livraison sous 24 à 48h</span><span>Réponse par e-mail du lundi au samedi</span><span>Devis gratuit et sans engagement</span></div></div>
       <div className="container nav-wrap">
         <Logo />
         <nav className="desktop-nav" aria-label="Navigation principale">
           <ServicesMenu services={services} />
           <Link href="/tarifs">Tarifs</Link><Link href="/departements">Zones locales</Link><Link href="/comment-ca-marche">Comment ça marche</Link><Link href="/guides">Guides</Link>
         </nav>
-        <div className="nav-actions"><a className="phone" href="tel:+33189000000"><span>☎</span><strong>01 89 00 00 00</strong></a><Link className="button button-small" href="/devis">Devis gratuit <span>→</span></Link></div>
+        <div className="nav-actions"><Link className="button button-small" href="/devis">Devis gratuit <span>→</span></Link></div>
         <details className="mobile-menu"><summary aria-label="Ouvrir le menu"><span /><span /><span /></summary><nav>{services.slice(0, 1).map(([label, href]) => <Link key={href} href="/nos-services">Nos services</Link>)}<Link href="/tarifs">Tarifs</Link><Link href="/regions">Régions</Link><Link href="/departements">Départements</Link><Link href="/comment-ca-marche">Comment ça marche</Link><Link href="/guides">Guides</Link><Link href="/devenir-partenaire">Devenir partenaire</Link><Link className="button" href="/devis">Devis gratuit</Link></nav></details>
       </div>
     </header>
@@ -38,7 +38,7 @@ export function Header() {
 export function Footer() {
   return (
     <footer className="site-footer"><div className="container footer-grid">
-      <div className="footer-brand"><Logo light /><p>La plateforme n°1 de location de benne en ligne en France.</p><a href="tel:+33189000000">☎ 01 89 00 00 00</a><a href="mailto:contact@mabenneenligne.fr">✉ contact@mabenneenligne.fr</a><div className="trust-pill">✓ Service client 6j/7</div></div>
+      <div className="footer-brand"><Logo light /><p>La plateforme de location de benne en ligne en France.</p><a href="mailto:contact@mabenneenligne.fr">✉ contact@mabenneenligne.fr</a><div className="trust-pill">✓ Réponse par e-mail 6j/7</div></div>
       <div><h3>Services</h3>{services.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}<Link href="/pro">Offre Pro</Link><Link href="/tarifs">Tarifs</Link></div>
       <div><h3>Zones locales</h3><Link href="/regions">Toutes les régions</Link><Link href="/departements">Tous les départements</Link><Link href="/notre-reseau">Notre réseau</Link><Link href="/devenir-partenaire">Devenir partenaire</Link><Link href="/contact">Contact</Link><Link href="/faq">FAQ</Link></div>
       <div><h3>Légal</h3><Link href="/mentions-legales">Mentions légales</Link><Link href="/cgu">CGV & CGU</Link><Link href="/politique-confidentialite">Confidentialité</Link><h3 className="footer-mini-title">Nos engagements</h3><span>Centres de traitement agréés</span><span>Transporteurs certifiés</span><span>Traçabilité des déchets</span></div>
