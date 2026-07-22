@@ -1,9 +1,9 @@
 export const prices = [
-  { volume: "8 m³", gravats: "299 €", dib: "349 €", verts: "279 €", bois: "299 €" },
-  { volume: "10 m³", gravats: "359 €", dib: "439 €", verts: "329 €", bois: "349 €" },
-  { volume: "15 m³", gravats: "479 €", dib: "549 €", verts: "429 €", bois: "459 €" },
-  { volume: "20 m³", gravats: "579 €", dib: "699 €", verts: "549 €", bois: "569 €" },
-  { volume: "30 m³", gravats: "749 €", dib: "899 €", verts: "—", bois: "699 €" },
+  { volume: "8 m³", gravats: "349 €", dib: "449 €", verts: "319 €", bois: "349 €" },
+  { volume: "10 m³", gravats: "389 €", dib: "499 €", verts: "369 €", bois: "389 €" },
+  { volume: "15 m³", gravats: "519 €", dib: "679 €", verts: "479 €", bois: "519 €" },
+  { volume: "20 m³", gravats: "629 €", dib: "779 €", verts: "599 €", bois: "629 €" },
+  { volume: "30 m³", gravats: "799 €", dib: "1 099 €", verts: "—", bois: "799 €" },
 ];
 export const departments = [
   { slug: "nord-59", name: "Nord", code: "59", cities: ["Lille", "Roubaix", "Tourcoing", "Dunkerque", "Valenciennes"], status: "immédiate" },
@@ -16,7 +16,7 @@ export const departments = [
   { slug: "haute-garonne-31", name: "Haute-Garonne", code: "31", cities: ["Toulouse", "Colomiers", "Blagnac", "Muret"], status: "active" },
 ];
 export const faqs = [
-  ["Combien coûte la location d’une benne ?", "Nos tarifs démarrent à 279 € HT et varient selon le volume, le type de déchet et votre ville. Le devis reçu est tout compris : livraison, 7 jours de location, enlèvement et traitement."],
+  ["Combien coûte la location d’une benne ?", "Nos tarifs démarrent à 319 € HT et varient selon le volume, le type de déchet et votre ville. Le devis reçu est tout compris : livraison, 7 jours de location, enlèvement et traitement."],
   ["Quel délai prévoir pour la livraison ?", "Dans les zones couvertes, une livraison sous 24 à 48 heures est généralement possible, sous réserve de disponibilité et d’accès au chantier."],
   ["Faut-il une autorisation de voirie ?", "Oui, si la benne est posée sur la voie publique. La demande se fait auprès de votre mairie, idéalement 8 à 15 jours avant la pose."],
   ["Que se passe-t-il si je dépasse le tonnage inclus ?", "Le tonnage supplémentaire est facturé selon le type de déchet et le tarif du centre de traitement. Votre conseiller vous précise les seuils avant validation."],

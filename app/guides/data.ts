@@ -142,7 +142,7 @@ export const guides: Guide[] = [
     imageAlt: "Livraison d’une benne orange devant une maison en rénovation avec contrôle du chantier",
     datePublished: "2026-07-21",
     dateModified: "2026-07-21",
-    quickAnswer: "En 2026, nos prix indicatifs démarrent à 279 € HT pour une benne de déchets verts de 8 m³, 299 € HT pour des gravats de 8 m³ et 349 € HT pour du DIB de 8 m³. Le prix exact dépend de la ville, du volume, du déchet, du tonnage inclus, de la durée et de l’accès. Un devis sérieux chiffre la livraison, l’enlèvement et le traitement.",
+    quickAnswer: "En 2026, nos prix indicatifs démarrent à 319 € HT pour une benne de déchets verts de 8 m³, 349 € HT pour des gravats de 8 m³ et 449 € HT pour du DIB de 8 m³. Le prix exact dépend de la ville, du volume, du déchet, du tonnage inclus, de la durée et de l’accès. Un devis sérieux chiffre la livraison, l’enlèvement et le traitement.",
     takeaways: [
       "Le type de déchet et son poids influencent souvent davantage le prix que le seul volume.",
       "Comparez toujours le tonnage inclus et le prix de la tonne supplémentaire.",
@@ -157,11 +157,11 @@ export const guides: Guide[] = [
         table: {
           headers: ["Volume", "Gravats", "DIB / tout-venant", "Déchets verts", "Bois"],
           rows: [
-            ["8 m³", "à partir de 299 €", "à partir de 349 €", "à partir de 279 €", "à partir de 299 €"],
-            ["10 m³", "à partir de 359 €", "à partir de 439 €", "à partir de 329 €", "à partir de 349 €"],
-            ["15 m³", "à partir de 479 €", "à partir de 549 €", "à partir de 429 €", "à partir de 459 €"],
-            ["20 m³", "à partir de 579 €", "à partir de 699 €", "à partir de 549 €", "à partir de 569 €"],
-            ["30 m³", "à partir de 749 €", "à partir de 899 €", "sur étude", "à partir de 699 €"],
+            ["8 m³", "à partir de 349 €", "à partir de 449 €", "à partir de 319 €", "à partir de 349 €"],
+            ["10 m³", "à partir de 389 €", "à partir de 499 €", "à partir de 369 €", "à partir de 389 €"],
+            ["15 m³", "à partir de 519 €", "à partir de 679 €", "à partir de 479 €", "à partir de 519 €"],
+            ["20 m³", "à partir de 629 €", "à partir de 779 €", "à partir de 599 €", "à partir de 629 €"],
+            ["30 m³", "à partir de 799 €", "à partir de 1 099 €", "sur étude", "à partir de 799 €"],
           ],
         },
       },
@@ -225,9 +225,9 @@ export const guides: Guide[] = [
         id: "exemples-budget",
         title: "Trois exemples de budget",
         paragraphs: [
-          "Petit chantier de maçonnerie : une benne de 8 m³ pour gravats propres démarre autour de 299 € HT dans les zones les plus compétitives. Le poids et la distance au centre restent déterminants.",
-          "Rénovation d’un appartement : une benne DIB de 10 à 15 m³ se situe dans notre grille à partir de 439 à 549 € HT. Séparer les gravats et le plâtre peut éviter un traitement plus coûteux du mélange.",
-          "Grand débarras : une benne de 20 m³ pour encombrants non dangereux démarre à 699 € HT. Démonter les meubles et retirer les équipements électriques améliore le remplissage et la conformité.",
+          "Petit chantier de maçonnerie : une benne de 8 m³ pour gravats propres démarre autour de 349 € HT dans les zones les plus compétitives. Le poids et la distance au centre restent déterminants.",
+          "Rénovation d’un appartement : une benne DIB de 10 à 15 m³ se situe dans notre grille à partir de 499 à 679 € HT. Séparer les gravats et le plâtre peut éviter un traitement plus coûteux du mélange.",
+          "Grand débarras : une benne de 20 m³ pour encombrants non dangereux démarre à 779 € HT. Démonter les meubles et retirer les équipements électriques améliore le remplissage et la conformité.",
         ],
         callout: { title: "À retenir", text: "Ces exemples ne sont pas des devis. La localisation, la date, l’accès, le tonnage et le contenu réel peuvent modifier le montant.", tone: "info" },
       },
@@ -246,7 +246,7 @@ export const guides: Guide[] = [
       },
     ],
     faq: [
-      ["Quel est le prix moyen d’une benne de 10 m³ ?", "Dans notre grille 2026, les prix de départ vont de 329 € HT pour des déchets verts à 439 € HT pour du DIB. Le prix exact dépend de la ville, du poids, de la durée et du traitement."],
+      ["Quel est le prix moyen d’une benne de 10 m³ ?", "Dans notre grille 2026, les prix de départ vont de 369 € HT pour des déchets verts à 499 € HT pour du DIB. Le prix exact dépend de la ville, du poids, de la durée et du traitement."],
       ["Le traitement des déchets est-il toujours inclus ?", "Il doit être indiqué au devis. Vérifiez le tonnage compris, car la part au-delà du forfait est généralement facturée séparément."],
       ["Pourquoi le DIB coûte-t-il plus cher que les gravats propres ?", "Un mélange non dangereux demande davantage de tri et peut avoir moins de débouchés de valorisation qu’un flux minéral propre et homogène."],
       ["La TVA est-elle comprise dans les prix affichés ?", "Nos tableaux affichent des prix de départ hors taxes. Le devis présente le montant HT, le taux applicable et le total TTC."],

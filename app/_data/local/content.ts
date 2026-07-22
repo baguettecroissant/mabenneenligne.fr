@@ -117,11 +117,11 @@ export function getLocalProfile(city: City, department: Department): LocalProfil
 
 export function getEstimatedPrices(profile: LocalProfile) {
   const bases = [
-    { volume: "8 m³", gravats: 299, melanges: 349, verts: 279, usage: "petite rénovation, taille ou débarras ciblé" },
-    { volume: "10 m³", gravats: 359, melanges: 439, verts: 329, usage: "pièce complète, terrasse ou garage" },
-    { volume: "15 m³", gravats: 479, melanges: 549, verts: 429, usage: "rénovation moyenne ou débarras de logement" },
-    { volume: "20 m³", gravats: 579, melanges: 699, verts: 549, usage: "maison, chantier conséquent ou encombrants" },
-    { volume: "30 m³", gravats: null, melanges: 899, verts: null, usage: "fort volume de déchets légers" },
+    { volume: "8 m³", gravats: 349, melanges: 449, verts: 319, usage: "petite rénovation, taille ou débarras ciblé" },
+    { volume: "10 m³", gravats: 389, melanges: 499, verts: 369, usage: "pièce complète, terrasse ou garage" },
+    { volume: "15 m³", gravats: 519, melanges: 679, verts: 479, usage: "rénovation moyenne ou débarras de logement" },
+    { volume: "20 m³", gravats: 629, melanges: 779, verts: 599, usage: "maison, chantier conséquent ou encombrants" },
+    { volume: "30 m³", gravats: 799, melanges: 1099, verts: null, usage: "fort volume de déchets légers" },
   ];
   const round = (value: number | null) => value === null ? null : Math.round((value * profile.priceFactor) / 10) * 10;
   return bases.map((row) => ({ ...row, gravats: round(row.gravats), melanges: round(row.melanges), verts: round(row.verts) }));
