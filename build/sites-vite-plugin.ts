@@ -44,14 +44,19 @@ export function sites(): Plugin {
       // Generate Cloudflare Pages Advanced Mode _worker.js
       const serverWorker = resolve(root, "dist", "server", "index.js");
       const serverManifest = resolve(root, "dist", "server", "__vite_rsc_assets_manifest.js");
+      const serverSsrDir = resolve(root, "dist", "server", "ssr");
       const clientWorkerTarget = resolve(root, "dist", "client", "_worker.js");
       const clientManifestTarget = resolve(root, "dist", "client", "__vite_rsc_assets_manifest.js");
+      const clientSsrTarget = resolve(root, "dist", "client", "ssr");
 
       if (await exists(serverWorker)) {
         await cp(serverWorker, clientWorkerTarget);
       }
       if (await exists(serverManifest)) {
         await cp(serverManifest, clientManifestTarget);
+      }
+      if (await exists(serverSsrDir)) {
+        await cp(serverSsrDir, clientSsrTarget, { recursive: true });
       }
     },
   };
