@@ -49,10 +49,14 @@ export function sites(): Plugin {
       const clientManifestTarget = resolve(root, "dist", "client", "__vite_rsc_assets_manifest.js");
       const clientSsrTarget = resolve(root, "dist", "client", "ssr");
 
-      // Remove Worker-only wrangler.json from dist/server so Cloudflare Pages doesn't conflict with Pages configuration
+      // Remove Worker-only wrangler configs so Cloudflare Pages deploys using wrangler.toml
       const serverWrangler = resolve(root, "dist", "server", "wrangler.json");
+      const wranglerDeployDir = resolve(root, ".wrangler");
       if (await exists(serverWrangler)) {
         await rm(serverWrangler, { force: true });
+      }
+      if (await exists(wranglerDeployDir)) {
+        await rm(wranglerDeployDir, { recursive: true, force: true });
       }
 
       if (await exists(serverWorker)) {
