@@ -41,16 +41,19 @@ export function sites(): Plugin {
         });
       }
 
-      // Generate Cloudflare Pages Advanced Mode _worker.js
-      const serverWorker = resolve(root, "dist", "server", "index.js");
-      const serverManifest = resolve(root, "dist", "server", "__vite_rsc_assets_manifest.js");
-      const serverSsrDir = resolve(root, "dist", "server", "ssr");
-      const clientWorkerTarget = resolve(root, "dist", "client", "_worker.js");
-      const clientManifestTarget = resolve(root, "dist", "client", "__vite_rsc_assets_manifest.js");
-      const clientSsrTarget = resolve(root, "dist", "client", "ssr");
+      // Generate Cloudflare Pages Advanced Mode _worker.js and all relative resolution dependencies
+      const serverDir = resolve(root, "dist", "server");
+      const clientDir = resolve(root, "dist", "client");
+      const serverWorker = resolve(serverDir, "index.js");
+      const clientWorker = resolve(clientDir, "_worker.js");
+      const clientIndex = resolve(clientDir, "index.js");
+      const serverManifest = resolve(serverDir, "__vite_rsc_assets_manifest.js");
+      const clientManifest = resolve(clientDir, "__vite_rsc_assets_manifest.js");
+      const serverSsrDir = resolve(serverDir, "ssr");
+      const clientSsrDir = resolve(clientDir, "ssr");
 
-      // Remove Worker-only wrangler configs so Cloudflare Pages deploys using wrangler.toml
-      const serverWrangler = resolve(root, "dist", "server", "wrangler.json");
+      // 1. Clean worker configs that trigger Cloudflare Pages conflict
+      const serverWrangler = resolve(serverDir, "wrangler.json");
       const wranglerDeployDir = resolve(root, ".wrangler");
       if (await exists(serverWrangler)) {
         await rm(serverWrangler, { force: true });
@@ -59,14 +62,23 @@ export function sites(): Plugin {
         await rm(wranglerDeployDir, { recursive: true, force: true });
       }
 
+      // 2. Copy worker entries (_worker.js AND index.js so relative imports resolve)
       if (await exists(serverWorker)) {
-        await cp(serverWorker, clientWorkerTarget);
+        await cp(serverWorker, clientWorker);
+        await cp(serverWorker, clientIndex);
       }
+
+      // 3. Copy root asset manifest
       if (await exists(serverManifest)) {
-        await cp(serverManifest, clientManifestTarget);
+        await cp(serverManifest, clientManifest);
       }
+
+      // 4. Copy ssr directory recursively (including ssr/__vite_rsc_assets_manifest.js)
       if (await exists(serverSsrDir)) {
-        await cp(serverSsrDir, clientSsrTarget, { recursive: true });
+        await cp(serverSsrDir, clientSsrDir, { recursive: true });
+        if (await exists(serverManifest)) {
+          await cp(serverManifest, resolve(clientSsrDir, "__vite_rsc_assets_manifest.js"));
+        }
       }
     },
   };
