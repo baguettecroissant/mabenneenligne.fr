@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/assets/*",
+    "/services/*",
+    "/guides/*",
+    "/favicon.png",
+    "/favicon.svg",
+    "/file.svg",
+    "/globe.svg",
+    "/hero-devenir-partenaire.png",
+    "/hero-homepage.png",
+    "/llms.txt",
+    "/og.png",
+    "/services-waste-streams.png",
+    "/window.svg"
+  ]
+}
