@@ -49,6 +49,12 @@ export function sites(): Plugin {
       const clientManifestTarget = resolve(root, "dist", "client", "__vite_rsc_assets_manifest.js");
       const clientSsrTarget = resolve(root, "dist", "client", "ssr");
 
+      // Remove Worker-only wrangler.json from dist/server so Cloudflare Pages doesn't conflict with Pages configuration
+      const serverWrangler = resolve(root, "dist", "server", "wrangler.json");
+      if (await exists(serverWrangler)) {
+        await rm(serverWrangler, { force: true });
+      }
+
       if (await exists(serverWorker)) {
         await cp(serverWorker, clientWorkerTarget);
       }
