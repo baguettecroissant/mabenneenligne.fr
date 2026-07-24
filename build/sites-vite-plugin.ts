@@ -1,4 +1,4 @@
-import { access, cp, mkdir, rm } from "node:fs/promises";
+import { access, cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Plugin } from "vite";
 
@@ -80,6 +80,35 @@ export function sites(): Plugin {
           await cp(serverManifest, resolve(clientSsrDir, "__vite_rsc_assets_manifest.js"));
         }
       }
+
+      // 5. Keep dynamic guide pages routed through the worker.
+      // Cloudflare's generated _routes.json can exclude /guides/* because the
+      // public guide images live in that folder. That also excludes article
+      // URLs like /guides/autorisation-voirie-benne and makes them 404.
+      const guideAssetsDir = resolve(clientDir, "guides");
+      const guideAssets = (await exists(guideAssetsDir))
+        ? (await readdir(guideAssetsDir)).map((file) => `/guides/${file}`)
+        : [];
+      const routes = {
+        version: 1,
+        include: ["/*"],
+        exclude: [
+          "/assets/*",
+          "/services/*",
+          ...guideAssets,
+          "/favicon.png",
+          "/favicon.svg",
+          "/file.svg",
+          "/globe.svg",
+          "/hero-devenir-partenaire.png",
+          "/hero-homepage.png",
+          "/llms.txt",
+          "/og.png",
+          "/services-waste-streams.png",
+          "/window.svg",
+        ],
+      };
+      await writeFile(resolve(clientDir, "_routes.json"), `${JSON.stringify(routes, null, 2)}\n`);
     },
   };
 }
