@@ -185,10 +185,13 @@ test("searches the official city dataset for the quote autocomplete", async () =
   assert.ok(payload.cities.some((city) => city.name === "Lille" && city.zip === "59000"));
 });
 
-test("rejects an incomplete lead before contacting Supabase", async () => {
+test("rejects an incomplete lead before contacting the marketplace connector", async () => {
   const response = await request("/api/leads", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      origin: "http://localhost",
+    },
     body: JSON.stringify({}),
   });
   assert.equal(response.status, 400);
@@ -196,15 +199,17 @@ test("rejects an incomplete lead before contacting Supabase", async () => {
   assert.match(payload.error, /manquantes ou invalides/i);
 });
 
-test("uses a server-side Supabase integration with no lead broker", async () => {
+test("uses the authenticated server-side marketplace connector", async () => {
   const [route, envExample] = await Promise.all([
     readFile(new URL("../app/api/leads/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
-  assert.match(route, /SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(route, /\/rest\/v1\/benne_leads/);
+  assert.match(route, /MARKETPLACE_INGEST_KEY/);
+  assert.match(route, /X-Marketplace-Source/);
   assert.match(route, /source_site/);
+  assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY|\/rest\/v1\/benne_leads/);
   assert.doesNotMatch(route, /viteundevis|viteunedevis|\bvud\b/i);
-  assert.match(envExample, /SUPABASE_SERVICE_ROLE_KEY/);
-  assert.doesNotMatch(envExample, /ANON_KEY/);
+  assert.match(envExample, /MARKETPLACE_INGEST_URL/);
+  assert.match(envExample, /MARKETPLACE_INGEST_KEY/);
+  assert.doesNotMatch(envExample, /SUPABASE|ANON_KEY/);
 });

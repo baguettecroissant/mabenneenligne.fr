@@ -1,4 +1,5 @@
 import { cities, getCity } from "../../_data/local/geo";
+import { validatePublicLeadRequest } from "./request-security";
 
 const wasteTypes = new Set(["gravats", "dib", "dechets-verts", "bois", "encombrants", "mixte"]);
 const volumes = new Set(["8", "10", "15", "20", "30", "a-definir"]);
@@ -25,6 +26,9 @@ function rateLimited(key: string) {
 }
 
 export async function POST(request: Request) {
+  const requestSecurity = validatePublicLeadRequest(request);
+  if (requestSecurity.status === 403) return Response.json({ error: "Origine non autorisée" }, { status: 403 });
+  if (requestSecurity.status === 415) return Response.json({ error: "Le formulaire doit être envoyé en JSON" }, { status: 415 });
   const input = await request.json().catch(() => null) as Record<string, unknown> | null;
   if (!input) return Response.json({ error: "Requête invalide" }, { status: 400 });
 
@@ -50,19 +54,26 @@ export async function POST(request: Request) {
   const entreprise = text(input.societe, 160);
   const message = text(input.message, 1500);
   const consent = input.consent === true;
+  const sourceSubmissionId = text(input.source_submission_id, 80);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const phoneValid = telephone.replace(/\D/g, "").length >= 10;
-  if (!nom || !prenom || !emailValid || !phoneValid || !adresse || !city || !wasteTypes.has(typeDechet) || !volumes.has(volume) || !profiles.has(profil) || !consent) {
+  if (!nom || !prenom || !emailValid || !phoneValid || !adresse || !city || !wasteTypes.has(typeDechet) || !volumes.has(volume) || !profiles.has(profil) || !consent || !/^mabenne-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sourceSubmissionId)) {
     return Response.json({ error: "Certaines informations sont manquantes ou invalides." }, { status: 400 });
   }
   if (dateLivraison && !/^\d{4}-\d{2}-\d{2}$/.test(dateLivraison)) return Response.json({ error: "Date de livraison invalide." }, { status: 400 });
   if (dateRetrait && !/^\d{4}-\d{2}-\d{2}$/.test(dateRetrait)) return Response.json({ error: "Date de retrait invalide." }, { status: 400 });
   if (dateLivraison && dateRetrait && dateRetrait < dateLivraison) return Response.json({ error: "La date de retrait doit suivre la date de livraison." }, { status: 400 });
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) return Response.json({ error: "Le service de devis est momentanément indisponible." }, { status: 503 });
+  const ingestUrl = process.env.MARKETPLACE_INGEST_URL;
+  const ingestKey = process.env.MARKETPLACE_INGEST_KEY;
+  if (!ingestUrl || !ingestKey) return Response.json({ error: "Le service de devis est momentanément indisponible." }, { status: 503 });
+
+  const codePostalFinal = city.postalCodes.includes(codePostal) ? codePostal : city.zip;
+  const consentAt = new Date().toISOString();
+  const fingerprintInput = [email, telephone.replace(/\D/g, ""), codePostalFinal, typeDechet, volume, consentAt.slice(0, 10)].join("|");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprintInput));
+  const leadFingerprint = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 
   const payload = {
     nom,
@@ -71,38 +82,41 @@ export async function POST(request: Request) {
     telephone,
     adresse,
     ville: city.name,
-    code_postal: city.postalCodes.includes(codePostal) ? codePostal : city.zip,
+    code_postal: codePostalFinal,
     departement: city.department_code,
     profil,
     entreprise: profil === "professionnel" ? entreprise : "",
     volume: volume === "a-definir" ? "À définir" : `${volume}m³`,
     type_dechet: typeDechet,
-    date_livraison: dateLivraison || null,
-    date_retrait: dateRetrait || null,
+    date_livraison: dateLivraison,
+    date_retrait: dateRetrait,
     message,
-    ip_address: ip,
-    user_agent: request.headers.get("user-agent")?.slice(0, 500) || "",
-    marketplace_visible: true,
-    is_sold: false,
+    consent: true,
     source_site: "mabenneenligne.fr",
+    source_domain: "mabenneenligne.fr",
+    source_campaign: "organic-form",
+    source_submission_id: sourceSubmissionId,
+    consent_marketplace_at: consentAt,
+    privacy_policy_version: "2026-07-27",
+    lead_fingerprint: leadFingerprint,
   };
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/benne_leads?select=id`, {
+  const response = await fetch(ingestUrl, {
     method: "POST",
     headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
+      Authorization: `Bearer ${ingestKey}`,
+      "X-Marketplace-Source": "mabenneenligne.fr",
       "content-type": "application/json",
-      Prefer: "return=representation",
+      "X-Marketplace-Visitor-Ip": ip,
     },
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    console.error("Supabase benne_leads insert failed", response.status, await response.text());
+  const result = await response.json().catch(() => null) as { success?: boolean; duplicate?: boolean } | null;
+  if (!response.ok || result?.success !== true) {
+    console.error("Marketplace connector failed", response.status);
     return Response.json({ error: "L’enregistrement n’a pas abouti. Réessayez dans quelques instants." }, { status: 502 });
   }
 
-  const rows = await response.json().catch(() => []) as Array<{ id?: string }>;
-  return Response.json({ ok: true, reference: rows[0]?.id ?? null }, { status: 201 });
+  return Response.json({ ok: true, duplicate: result.duplicate === true }, { status: result.duplicate ? 200 : 201 });
 }

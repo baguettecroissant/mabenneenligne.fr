@@ -97,6 +97,7 @@ function CityAutocomplete({ initialCity, onSelect }: { initialCity?: SelectedCit
 }
 
 export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
+  const sourceSubmissionId = useRef<string | null>(null);
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
@@ -121,13 +122,14 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
       return;
     }
     if (!selectedCity) { setStep(1); setError("Sélectionnez une ville dans la liste proposée."); return; }
+    sourceSubmissionId.current ??= `mabenne-${crypto.randomUUID()}`;
     setStatus("sending");
     setError("");
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...data, ville: selectedCity.name, citySlug: selectedCity.slug, codePostal: selectedCity.zip }),
+        body: JSON.stringify({ ...data, ville: selectedCity.name, citySlug: selectedCity.slug, codePostal: selectedCity.zip, source_submission_id: sourceSubmissionId.current }),
       });
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || "L’envoi n’a pas abouti.");
