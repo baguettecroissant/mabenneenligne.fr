@@ -8,11 +8,31 @@ const endpoint = "https://mabenneenligne.fr/api/territory-contact";
 const upstream = "https://prix-location-benne.fr/api/public/territory-contact?department=67";
 const route = async () => loadComponent("app/api/territory-contact/route.ts");
 
+const actualCentralContract = {
+  active: true,
+  department: "67",
+  display_name: "Alsace Recycle",
+  phone_e164: "+33102030405",
+  phone_display: "01 02 03 04 05",
+  hours: "Lundi au vendredi, 8 h à 17 h",
+};
+
 afterEach(() => mock.restoreAll());
+
+test("proxy accepts the exact contract emitted by prix-location-benne", async () => {
+  mock.method(globalThis, "fetch", async () => Response.json(actualCentralContract));
+  const { GET } = await route();
+  const response = await GET(new Request(endpoint + "?department=67"));
+  assert.deepEqual(await response.json(), actualCentralContract);
+});
 
 test("valid active contact has exact public fields and a short cache with no stale serving", async () => {
   const { GET } = await route();
-  for (const payload of [activeContact, Object.fromEntries(Object.entries(activeContact).filter(([key]) => key !== "hours"))]) {
+  for (const payload of [
+    activeContact,
+    { ...activeContact, hours: null },
+    { ...activeContact, phone_e164: "+33987654321", phone_display: "09 87 65 43 21", hours: "x".repeat(200) },
+  ]) {
     mock.method(globalThis, "fetch", async () => Response.json(payload, { headers: { "content-type": "application/json; charset=utf-8" } }));
     const response = await GET(new Request(endpoint + "?department=67"));
     assert.equal(response.status, 200);
@@ -22,18 +42,23 @@ test("valid active contact has exact public fields and a short cache with no sta
   }
 });
 
-test("strict schema rejects missing or extra fields, coercions, invalid E.164 and impossible ISO dates", async () => {
+test("strict schema rejects missing or extra fields, coercions, unsafe text and malformed or mismatched French numbers", async () => {
   const { GET } = await route();
   const invalid = [null, [], "active", 67, true, {}, { ...activeContact, extra: "private" }, { ...activeContact, department: "68" }, { ...activeContact, active: "true" }, { ...activeContact, display_name: "Someone else" }];
   for (const key of Object.keys(activeContact)) {
-    if (key !== "hours") invalid.push(Object.fromEntries(Object.entries(activeContact).filter(([field]) => field !== key)));
-    for (const value of [null, {}, [], true, 67]) {
-      if (value !== activeContact[key]) invalid.push({ ...activeContact, [key]: value });
+    invalid.push(Object.fromEntries(Object.entries(activeContact).filter(([field]) => field !== key)));
+    for (const value of [null, {}, [], true, false, 67, 0, "true", ""]) {
+      if (value !== activeContact[key] && !(key === "hours" && (value === null || value === "true"))) invalid.push({ ...activeContact, [key]: value });
     }
   }
-  for (const phone of ["0102030405", "+00102030405", "+33 1 02 03 04 05", "tel:+33102030405", "+1234567890123456", "+33102030405\n", " +33102030405"]) invalid.push({ ...activeContact, phone });
-  for (const updated_at of ["2026-02-30T08:00:00.000Z", "2025-02-29T08:00:00.000Z", "2026-13-01T08:00:00.000Z", "2026-09-20T24:00:00.000Z", "2026-09-20", "2026-09-20T08:00:00", "yesterday", "2026-09-20T08:00:00.000Z\n"]) invalid.push({ ...activeContact, updated_at });
-  for (const hours of ["", " ", "x".repeat(201), "8 h\n17 h", "<script>bad</script>"]) invalid.push({ ...activeContact, hours });
+  for (const phone_e164 of ["0102030405", "+00102030405", "+33010203040", "+3310203040", "+331020304050", "+44102030405", "+33 1 02 03 04 05", "tel:+33102030405", "+1234567890123456", "+33102030405\n", " +33102030405", "+33102030405;ext=1"]) invalid.push({ ...activeContact, phone_e164 });
+  for (const phone_display of ["01 02 03 04 06", "02 02 03 04 05", "0102030405", "+33102030405", "01 02 03 04", "01 02 03 04 050", "01  02 03 04 05", "01\t02 03 04 05", "01\u00a002 03 04 05", "01 02 03 04 05\n", " 01 02 03 04 05", "01 02 03 04 05;ext=1", "<01 02 03 04 05>"]) invalid.push({ ...activeContact, phone_display });
+  for (const display_name of ["", " ", "Alsace Recycle ", "alsace recycle", "x".repeat(101), "Alsace\nRecycle", "<Alsace Recycle>"]) invalid.push({ ...activeContact, display_name });
+  for (const hours of ["", " ", "x".repeat(201), "<script>bad</script>"]) invalid.push({ ...activeContact, hours });
+  for (const code of [...Array.from({ length: 32 }, (_, index) => index), ...Array.from({ length: 33 }, (_, index) => index + 127)]) {
+    invalid.push({ ...activeContact, hours: `8 h${String.fromCharCode(code)}17 h` });
+    invalid.push({ ...activeContact, display_name: `Alsace${String.fromCharCode(code)}Recycle` });
+  }
   for (const payload of invalid) {
     mock.method(globalThis, "fetch", async () => Response.json(payload));
     const response = await GET(new Request(endpoint + "?department=67"));
@@ -41,6 +66,22 @@ test("strict schema rejects missing or extra fields, coercions, invalid E.164 an
     assert.equal(response.headers.get("cache-control"), "no-store");
     mock.restoreAll();
   }
+});
+
+test("shared parser rejects boxed primitives, coercions and noncanonical own keys", () => {
+  const { parseActiveTerritoryContact } = loadComponent("app/_lib/territory-contact.ts");
+  const coerce = () => { throw new Error("Contact fields must never be coerced"); };
+  for (const key of Object.keys(activeContact)) {
+    for (const value of [undefined, Object(activeContact[key]), Symbol("private"), 67n, coerce, { toString: coerce, valueOf: coerce }]) {
+      assert.equal(parseActiveTerritoryContact({ ...activeContact, [key]: value }), null, key);
+    }
+    const inherited = { ...activeContact };
+    delete inherited[key];
+    Object.setPrototypeOf(inherited, { [key]: activeContact[key] });
+    assert.equal(parseActiveTerritoryContact(inherited), null, key);
+  }
+  assert.equal(parseActiveTerritoryContact({ ...activeContact, [Symbol("private")]: "extra" }), null);
+  assert.equal(parseActiveTerritoryContact(Object.defineProperty({ ...activeContact }, "private", { value: "extra" })), null);
 });
 
 test("proxy permits exactly one department=67 parameter", async () => {

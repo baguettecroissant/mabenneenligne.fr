@@ -2,34 +2,35 @@ export type ActiveTerritoryContact = {
   active: true;
   department: "67";
   display_name: "Alsace Recycle";
-  phone: string;
-  hours?: string;
-  updated_at: string;
+  phone_e164: string;
+  phone_display: string;
+  hours: string | null;
 };
+
+function isSafeText(value: unknown, maxLength: number): value is string {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength && !/[\p{Cc}<>]/u.test(value);
+}
 
 // Closed public contract: no coercion, nested values or undocumented fields.
 // Inactive or unrecognized responses must never expose contact information.
 export function parseActiveTerritoryContact(input: unknown): ActiveTerritoryContact | null {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const value = input as Record<string, unknown>;
-  const required = ["active", "department", "display_name", "phone", "updated_at"];
-  const keys = Object.keys(value);
-  if (!required.every((key) => Object.hasOwn(value, key)) || keys.some((key) => !required.includes(key) && key !== "hours")) return null;
-  if (value.active !== true || value.department !== "67" || value.display_name !== "Alsace Recycle") return null;
-  if (typeof value.phone !== "string" || value.phone !== value.phone.trim() || !/^\+[1-9]\d{1,14}$/.test(value.phone)) return null;
-  if (Object.hasOwn(value, "hours") && (typeof value.hours !== "string" || !value.hours.trim() || value.hours.length > 200 || /[\u0000-\u001f\u007f<>]/.test(value.hours))) return null;
-  if (typeof value.updated_at !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value.updated_at)) return null;
-  const timestamp = Date.parse(value.updated_at);
-  if (!Number.isFinite(timestamp)) return null;
-  const canonical = value.updated_at.length === 20 ? value.updated_at.replace("Z", ".000Z") : value.updated_at;
-  if (new Date(timestamp).toISOString() !== canonical) return null;
+  const required = ["active", "department", "display_name", "phone_e164", "phone_display", "hours"];
+  if (Reflect.ownKeys(value).length !== required.length || !required.every((key) => Object.hasOwn(value, key))) return null;
+  if (value.active !== true || value.department !== "67") return null;
+  if (!isSafeText(value.display_name, 100) || value.display_name !== "Alsace Recycle") return null;
+  if (typeof value.phone_e164 !== "string" || value.phone_e164.length !== 12 || !/^\+33[1-9]\d{8}$/.test(value.phone_e164)) return null;
+  const nationalNumber = `0${value.phone_e164.slice(3)}`;
+  if (typeof value.phone_display !== "string" || value.phone_display !== nationalNumber.replace(/(\d{2})(?=\d)/g, "$1 ")) return null;
+  if (value.hours !== null && !isSafeText(value.hours, 200)) return null;
 
   return {
     active: true,
     department: "67",
     display_name: "Alsace Recycle",
-    phone: value.phone,
-    ...(typeof value.hours === "string" ? { hours: value.hours } : {}),
-    updated_at: value.updated_at,
+    phone_e164: value.phone_e164,
+    phone_display: value.phone_display,
+    hours: value.hours,
   };
 }

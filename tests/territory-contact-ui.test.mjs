@@ -17,17 +17,17 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], "/api/territory-contact?department=67");
   assert.equal(calls[0][1].credentials, "omit");
-  assert.equal(phoneLink(view).props.href, "tel:+33102030405");
-  assert.match(textContent(phoneLink(view)), /Appeler Alsace Recycle/);
+  assert.equal(view.tree().props["aria-label"], "Contact Alsace Recycle pour le Bas-Rhin");
+  assert.equal(phoneLink(view).props.href, `tel:${activeContact.phone_e164}`);
+  assert.equal(textContent(phoneLink(view)), `Appeler Alsace Recycle ${activeContact.phone_display}`);
   assert.match(textContent(view.tree()), /Bas-Rhin uniquement/);
   assert.ok(textContent(view.tree()).includes(activeContact.hours));
   const alternative = elements(view.tree(), (node) => node.type === "a" && node.props.href === "/devis")[0];
   assert.ok(alternative, "The quote form remains an explicit alternative");
 });
 
-test("hours are optional", async (t) => {
-  const contact = { ...activeContact };
-  delete contact.hours;
+test("null hours hide the hours row and preserve the form alternative", async (t) => {
+  const contact = { ...activeContact, hours: null };
   t.mock.method(globalThis, "fetch", async () => Response.json(contact));
   const view = mount(component(), { departmentCode: "67", placement: "quote_form" });
   t.after(() => view.unmount());
@@ -45,8 +45,23 @@ test("inactive, error, malformed and mismatched responses never render", async (
     () => new Response("invalid", { headers: { "content-type": "application/json" } }),
     () => new Response(JSON.stringify(activeContact), { headers: { "content-type": "text/html" } }),
     () => Response.json({ ...activeContact, department: "68" }),
-    () => Response.json({ ...activeContact, phone: "+33102030405;ext=1" }),
+    () => Response.json({ ...activeContact, department: 67 }),
+    () => Response.json({ ...activeContact, display_name: "Another provider" }),
+    () => Response.json({ ...activeContact, active: "true" }),
+    () => Response.json({ ...activeContact, phone_e164: "+33102030405;ext=1" }),
+    () => Response.json({ ...activeContact, phone_e164: 33102030405 }),
+    () => Response.json({ ...activeContact, phone_display: "01 02 03 04 06" }),
+    () => Response.json({ ...activeContact, phone_display: "01<script>02 03 04 05" }),
+    () => Response.json({ ...activeContact, phone_display: 102030405 }),
+    () => Response.json({ ...activeContact, hours: false }),
+    () => Response.json({ ...activeContact, hours: "Lundi\nvendredi" }),
+    () => Response.json({ ...activeContact, hours: "<script>" }),
     () => Response.json({ ...activeContact, extra: "private" }),
+    ...Object.keys(activeContact).map((key) => () => {
+      const contact = { ...activeContact };
+      delete contact[key];
+      return Response.json(contact);
+    }),
   ]) {
     const fetch = t.mock.method(globalThis, "fetch", reply);
     const view = mount(component(), { departmentCode: "67", placement: "department_page" });
@@ -90,6 +105,26 @@ test("changing territory immediately hides stale contact and cancels pending fet
   assert.equal(view.tree(), null);
 });
 
+test("contact loading times out after five seconds and ignores a late response", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let resolve;
+  let signal;
+  t.mock.method(globalThis, "fetch", (_url, options) => {
+    signal = options.signal;
+    return new Promise((done) => { resolve = done; });
+  });
+  const view = mount(component(), { departmentCode: "67", placement: "city_page" });
+  t.after(() => view.unmount());
+  await view.flushEffects();
+  t.mock.timers.tick(4999);
+  assert.equal(signal.aborted, false);
+  t.mock.timers.tick(1);
+  assert.equal(signal.aborted, true);
+  resolve(Response.json(activeContact));
+  await view.flushEffects();
+  assert.equal(view.tree(), null);
+});
+
 test("phone click sends exactly the cookieless analytics allowlist without blocking navigation", async (t) => {
   const previousWindow = globalThis.window;
   globalThis.window = { location: { pathname: "/location-benne/strasbourg-67000", search: "?email=private@example.test", hash: "#private" } };
@@ -109,7 +144,7 @@ test("phone click sends exactly the cookieless analytics allowlist without block
     const result = phoneLink(view).props.onClick({ preventDefault() { prevented = true; } });
     assert.equal(result, undefined);
     assert.equal(prevented, false);
-    assert.equal(phoneLink(view).props.href, "tel:+33102030405");
+    assert.equal(phoneLink(view).props.href, `tel:${activeContact.phone_e164}`);
     assert.equal(calls.length, 2);
     const [url, options] = calls[1];
     assert.equal(url, "https://nhmvgsrwhjsjnpncpiaj.supabase.co/functions/v1/analytics-collect");
@@ -123,6 +158,9 @@ test("phone click sends exactly the cookieless analytics allowlist without block
       event_name: "territory_phone_click",
       event_detail: { source_site: "mabenneenligne.fr", department: "67", placement: "city_page" },
     });
+    for (const privateValue of [activeContact.phone_e164, activeContact.phone_display, activeContact.display_name, activeContact.hours, "private@example.test", "#private"]) {
+      assert.ok(!options.body.includes(privateValue), `Analytics exclude ${privateValue}`);
+    }
     await view.flushEffects();
     view.unmount();
     fetch.mock.restore();

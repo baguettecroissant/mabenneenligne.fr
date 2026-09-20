@@ -64,7 +64,7 @@ export function TerritoryContactCta({ departmentCode, placement }: Props) {
 
   return <aside className="territory-contact" aria-label="Contact Alsace Recycle pour le Bas-Rhin">
     <p><strong>Alsace Recycle</strong><span>Bas-Rhin uniquement</span></p>
-    <a className="button" href={`tel:${contact.phone}`} onClick={trackPhoneClick}>Appeler Alsace Recycle <span>{contact.phone}</span></a>
+    <a className="button" href={`tel:${contact.phone_e164}`} onClick={trackPhoneClick}>Appeler Alsace Recycle <span>{contact.phone_display}</span></a>
     {contact.hours && <p className="territory-contact-hours">Horaires : {contact.hours}</p>}
     <a className="territory-contact-form" href={placement === "quote_form" ? "#quote-project" : "/devis"}>{placement === "quote_form" ? "Ou continuer le formulaire ci-dessous" : "Ou demander un devis par formulaire"}</a>
   </aside>;
