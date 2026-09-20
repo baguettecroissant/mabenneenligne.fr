@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     source_campaign: "organic-form",
     source_submission_id: sourceSubmissionId,
     consent_marketplace_at: consentAt,
-    privacy_policy_version: "2026-07-27",
+    privacy_policy_version: "2026-09-20",
     lead_fingerprint: leadFingerprint,
   };
 

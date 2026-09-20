@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "../../_components/SiteShell";
+import { TerritoryContactCta } from "../../_components/TerritoryContactCta";
 import { departmentGenitive, formatPopulation, getCitiesForDepartment, getDepartment, getRegion } from "../../_data/local/geo";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -43,7 +44,7 @@ export default async function DepartmentPage({ params }: Props) {
     <SiteShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
       <nav className="breadcrumb-bar" aria-label="Fil d’Ariane"><div className="container"><Link href="/">Accueil</Link><span>›</span><Link href="/regions">Régions</Link><span>›</span><Link href={`/regions/${department.regionSlug}`}>{department.region}</Link><span>›</span><strong>{department.name}</strong></div></nav>
-      <section className="local-department-hero"><div className="container"><span className="eyebrow light">Département {department.code} · {department.region}</span><h1>Location de benne · <em>{department.name}</em></h1><p>Accédez aux informations de prix, de volume, de voirie et d’accès camion pour chacune des {department.cityCount} communes du département.</p><div className="hero-actions"><Link className="button" href={`/devis?departement=${department.code}`}>Obtenir un devis local →</Link><a className="button button-ghost" href="#villes">Choisir une ville</a></div></div></section>
+      <section className="local-department-hero"><div className="container"><span className="eyebrow light">Département {department.code} · {department.region}</span><h1>Location de benne · <em>{department.name}</em></h1><p>Accédez aux informations de prix, de volume, de voirie et d’accès camion pour chacune des {department.cityCount} communes du département.</p><div className="hero-actions"><Link className="button" href={`/devis?departement=${department.code}`}>Obtenir un devis local →</Link><a className="button button-ghost" href="#villes">Choisir une ville</a></div>{department.code === "67" && <TerritoryContactCta departmentCode={department.code} placement="department_page" />}</div></section>
       <section className="hub-kpis"><div className="container"><div><strong>{department.cityCount}</strong><span>communes</span></div><div><strong>{formatPopulation(department.population)}</strong><span>habitants recensés</span></div><div><strong>{largeCities}</strong><span>villes de plus de 10 000 habitants</span></div><div><strong>{formatPopulation(average)}</strong><span>habitants par commune en moyenne</span></div></div></section>
       <section className="content-section">
         <div className="container">

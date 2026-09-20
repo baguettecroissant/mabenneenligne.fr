@@ -6,6 +6,10 @@ import { validatePublicLeadRequest } from "../app/api/leads/request-security.ts"
 
 const route = readFileSync(new URL("../app/api/leads/route.ts", import.meta.url), "utf8");
 
+test("new requests record the privacy version disclosing the exclusive Bas-Rhin recipient", () => {
+  assert.match(route, /privacy_policy_version:\s*"2026-09-20"/);
+});
+
 test("MaBenne forwards leads through the authenticated central connector", () => {
   assert.doesNotMatch(route, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.doesNotMatch(route, /\/rest\/v1\/benne_leads/);

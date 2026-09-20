@@ -1,8 +1,38 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
-import test from "node:test";
+import test, { beforeEach } from "node:test";
+import { activeContact } from "./helpers/territory-fixture.mjs";
+
+beforeEach((t) => {
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("Unexpected network request: rendered tests must mock every fetch.");
+  });
+});
 
 const root = new URL("../", import.meta.url);
+
+test("built worker exposes the territory proxy with mocked upstream and rejects other methods and queries", async (t) => {
+  const calls = [];
+  t.mock.method(globalThis, "fetch", async (...args) => {
+    calls.push(args);
+    return Response.json(activeContact);
+  });
+  const active = await request("/api/territory-contact?department=67");
+  assert.equal(active.status, 200);
+  assert.deepEqual(await active.json(), activeContact);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], "https://prix-location-benne.fr/api/public/territory-contact?department=67");
+  for (const method of ["POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]) {
+    const rejected = await request("/api/territory-contact?department=67", { method });
+    assert.equal(rejected.status, 405, method);
+    assert.equal(rejected.headers.get("allow"), "GET");
+    if (method !== "HEAD") assert.deepEqual(await rejected.json(), { active: false, department: "67" });
+  }
+  const invalid = await request("/api/territory-contact?department=67&department=67");
+  assert.equal(invalid.status, 400);
+  assert.deepEqual(await invalid.json(), { active: false, department: "67" });
+  assert.equal(calls.length, 1);
+});
 async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
@@ -173,6 +203,40 @@ test("renders the complete two-step quote journey", async () => {
   assert.match(html, /Type de déchet/);
   assert.match(html, /Volume estimé/);
   assert.match(html, /Confidentialité/);
+});
+
+test("preselected Bas-Rhin quotes disclose the exclusive recipient in rendered HTML", async () => {
+  const response = await render("/devis?ville=Strasbourg&codePostal=67000");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Votre demande est transmise exclusivement à Alsace Recycle pour le Bas-Rhin \(67\)\./);
+  assert.doesNotMatch(html, /Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis/);
+  assert.match(html, /Continuer vers mes coordonnées/);
+});
+
+test("generic and non-67 quotes retain the generic recipient notice", async () => {
+  for (const path of ["/devis", "/devis?ville=Paris&codePostal=75001"]) {
+    const response = await render(path);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis/);
+    assert.doesNotMatch(html, /Alsace Recycle|territory_phone_click|tel:/);
+  }
+});
+
+test("privacy policy discloses the Bas-Rhin recipient and minimal cookieless phone click measurement", async () => {
+  const response = await render("/politique-confidentialite");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Alsace Recycle/);
+  assert.match(html, /Bas-Rhin \(67\)/);
+  assert.match(html, /exclusivement/);
+  assert.match(html, /sans cookie/i);
+  assert.match(html, /domaine/i);
+  assert.match(html, /chemin[^<.]*sans[^<.]*paramètre/i);
+  assert.match(html, /département/i);
+  assert.match(html, /emplacement/i);
+  assert.match(html, /sans[^<.]*numéro de téléphone/i);
 });
 
 test("searches the official city dataset for the quote autocomplete", async () => {

@@ -48,3 +48,12 @@
 
 /* Navigation contrôlée et visuels de services cadrés sans déformation. */
 .desktop-nav>a,.services-menu>button{transition:.2s}.desktop-nav>a:hover,.services-menu>button:hover{color:var(--orange)}.services-menu{position:relative}.services-menu>button{appearance:none;border:0;background:transparent;padding:0;color:inherit;cursor:pointer;font:inherit;font-weight:inherit}.services-menu>button span{color:var(--orange)}.services-menu-panel{position:absolute;top:32px;left:-20px;width:215px;background:white;padding:10px;border-radius:12px;box-shadow:var(--shadow);z-index:60}.services-menu-panel a{display:block;padding:9px 10px;border-radius:7px}.services-menu-panel a:hover,.services-menu-panel a:focus-visible{background:#fff7ed;color:var(--orange-dark);outline:none}.mobile-menu:not([open]) nav{display:none}.service-image{height:auto;background-image:none;background-size:cover;background-position:center;aspect-ratio:4/3}.service-page-image{height:auto;background-image:none;background-size:cover;background-position:center;width:100%;aspect-ratio:4/3}
+.territory-contact { margin: 24px 0; padding: 20px; border: 1px solid #cbd5e1; border-radius: 14px; background: #fff; color: #0f2b46; }
+.territory-contact p { margin: 0 0 12px; color: #0f2b46; }
+.territory-contact p strong, .territory-contact p span { display: block; }
+.territory-contact a { min-height: 48px; min-width: 48px; display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.territory-contact a:focus-visible { outline: 3px solid #0f2b46; outline-offset: 4px; }
+.territory-contact .button { background: #c2410c; }
+.territory-contact .button:hover { background: #9a3412; }
+.territory-contact .territory-contact-hours { margin: 12px 0 0; }
+.territory-contact .territory-contact-form { display: flex; width: fit-content; margin-top: 8px; color: #0f2b46; text-decoration: underline; }

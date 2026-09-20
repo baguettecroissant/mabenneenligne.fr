@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "../../_components/SiteShell";
+import { TerritoryContactCta } from "../../_components/TerritoryContactCta";
 import { getCityFaq, getEstimatedPrices, getLocalProfile } from "../../_data/local/content";
 import {
   formatDepartmentLabel,
@@ -123,6 +124,7 @@ export default async function CityPage({ params }: Props) {
               <Link className="button button-large" href={quoteHref}>Recevoir mon prix à {city.name} →</Link>
               <a className="button button-ghost" href="#prix">Voir les prix indicatifs</a>
             </div>
+            {city.department_code === "67" && <TerritoryContactCta departmentCode={city.department_code} placement="city_page" />}
             <div className="local-trust"><span>✓ Devis gratuit</span><span>✓ Réponse locale</span><span>✓ Filières autorisées</span></div>
           </div>
           <aside className="local-summary" aria-label={`Repères pour ${city.name}`}>

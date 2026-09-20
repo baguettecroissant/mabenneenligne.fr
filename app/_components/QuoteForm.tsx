@@ -2,6 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { TerritoryContactCta } from "./TerritoryContactCta";
 
 type SelectedCity = {
   name: string;
@@ -102,6 +103,10 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [selectedCity, setSelectedCity] = useState<SelectedCity | null>(initialCity ?? null);
+  const exclusiveTerritory = selectedCity?.departmentCode === "67";
+  const recipientNotice = exclusiveTerritory
+    ? "Votre demande est transmise exclusivement à Alsace Recycle pour le Bas-Rhin (67)."
+    : "Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis";
   const [data, setData] = useState<QuoteData>({ typeClient: "particulier", typeDechet: "", volume: "", dateLivraison: "", dateRetrait: "", prenom: "", nom: "", telephone: "", email: "", adresse: "", societe: "", message: "", consent: false, website: "" });
   const change = <K extends keyof QuoteData>(name: K, value: QuoteData[K]) => setData((current) => ({ ...current, [name]: value }));
 
@@ -140,7 +145,7 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
     }
   }
 
-  if (status === "done") return <div className="quote-success"><span>✓</span><small>Demande enregistrée</small><h2>Merci, votre projet est entre de bonnes mains.</h2><p>Les informations ont bien été transmises à MaBenneEnLigne. Un conseiller vérifie maintenant la disponibilité autour de {selectedCity?.name}.</p><div><Link className="button" href="/">Retour à l’accueil</Link><Link className="button button-secondary" href="/guides">Préparer mon chantier</Link></div></div>;
+  if (status === "done") return <div className="quote-success"><span>✓</span><small>Demande enregistrée</small><h2>Merci, votre projet est entre de bonnes mains.</h2><p>{exclusiveTerritory ? recipientNotice : <>Les informations ont bien été transmises à MaBenneEnLigne. Un conseiller vérifie maintenant la disponibilité autour de {selectedCity?.name}.</>}</p><div><Link className="button" href="/">Retour à l’accueil</Link><Link className="button button-secondary" href="/guides">Préparer mon chantier</Link></div></div>;
 
   return <form className="quote-card" onSubmit={submit} noValidate>
     <div className="quote-progress" aria-label={`Étape ${step} sur 2`}><div className={step >= 1 ? "active" : ""}><span>{step > 1 ? "✓" : "1"}</span><p><strong>Votre projet</strong><small>Lieu, déchets et volume</small></p></div><i /><div className={step >= 2 ? "active" : ""}><span>2</span><p><strong>Vos coordonnées</strong><small>Dates et contact</small></p></div></div>
@@ -149,7 +154,8 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
         <header><span>Étape 1 sur 2</span><h2>Décrivez votre besoin</h2><p>Ces éléments permettent de solliciter le bon transporteur avec un tarif cohérent.</p></header>
         <fieldset><legend>Vous êtes</legend><div className="profile-switch"><button type="button" aria-pressed={data.typeClient === "particulier"} className={data.typeClient === "particulier" ? "selected" : ""} onClick={() => change("typeClient", "particulier")}><span>♙</span><strong>Particulier</strong></button><button type="button" aria-pressed={data.typeClient === "professionnel"} className={data.typeClient === "professionnel" ? "selected" : ""} onClick={() => change("typeClient", "professionnel")}><span>▤</span><strong>Professionnel</strong></button></div></fieldset>
         <fieldset><legend>Lieu de livraison <b>*</b></legend><CityAutocomplete initialCity={initialCity} onSelect={setSelectedCity} /></fieldset>
-        <fieldset><legend>Type de déchet <b>*</b></legend><div className="waste-choice-grid">{wasteOptions.map((option) => <button type="button" aria-pressed={data.typeDechet === option.value} className={data.typeDechet === option.value ? "selected" : ""} key={option.value} onClick={() => change("typeDechet", option.value)}><span>{option.icon}</span><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></fieldset>
+        {exclusiveTerritory && <TerritoryContactCta departmentCode={selectedCity.departmentCode} placement="quote_form" />}
+        <fieldset id="quote-project" tabIndex={-1}><legend>Type de déchet <b>*</b></legend><div className="waste-choice-grid">{wasteOptions.map((option) => <button type="button" aria-pressed={data.typeDechet === option.value} className={data.typeDechet === option.value ? "selected" : ""} key={option.value} onClick={() => change("typeDechet", option.value)}><span>{option.icon}</span><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></fieldset>
         <fieldset><legend>Volume estimé <b>*</b></legend><div className="volume-choice-grid">{volumeOptions.map(([value, label]) => <button type="button" aria-pressed={data.volume === value} className={data.volume === value ? "selected" : ""} key={value} onClick={() => change("volume", value)}><strong>{value === "a-definir" ? "?" : `${value} m³`}</strong><small>{label}</small></button>)}</div><p className="field-help">Un doute ? <Link href="/guides/choisir-taille-benne">Consultez notre guide des volumes →</Link></p></fieldset>
         {error && <p className="quote-error" role="alert">{error}</p>}
         <button className="button quote-next" type="button" onClick={next}>Continuer vers mes coordonnées <span>→</span></button>
@@ -168,6 +174,6 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
         <div className="quote-submit-row"><button className="button button-secondary" type="button" onClick={() => setStep(1)}>← Retour</button><button className="button" disabled={status === "sending"} type="submit">{status === "sending" ? "Enregistrement…" : "Envoyer ma demande gratuite →"}</button></div>
       </div>}
     </div>
-    <div className="quote-privacy">▣ Connexion sécurisée · Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis</div>
+    <div className="quote-privacy" aria-live="polite">▣ Connexion sécurisée · {recipientNotice}</div>
   </form>;
 }
