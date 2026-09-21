@@ -25,8 +25,8 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
   assert.ok(textContent(view.tree()).includes(activeContact.hours));
   const alternative = elements(view.tree(), (node) => node.type === "a" && node.props.href === "/devis")[0];
   assert.ok(alternative, "The quote form remains an explicit alternative");
-  assert.match(textContent(view.tree()), /clic d’appel.*mesuré.*sans cookie.*donnée saisie/i);
-  assert.ok(elements(view.tree(), (node) => node.type === "a" && node.props.href === "/politique-confidentialite").length);
+  assert.doesNotMatch(textContent(view.tree()), /clic d’appel.*mesuré.*sans cookie.*donnée saisie/i);
+  assert.equal(elements(view.tree(), (node) => node.type === "a" && node.props.href === "/politique-confidentialite").length, 0);
 });
 
 test("null hours hide the hours row and preserve the form alternative", async (t) => {

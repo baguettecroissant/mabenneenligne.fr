@@ -57,3 +57,11 @@
 .territory-contact .button:hover { background: #9a3412; }
 .territory-contact .territory-contact-hours { margin: 12px 0 0; }
 .territory-contact .territory-contact-form { display: flex; width: fit-content; margin-top: 8px; color: #0f2b46; text-decoration: underline; }
+.mobile-sticky-cta[hidden]{display:none!important}
+.mobile-sticky-cta-spacer[hidden]{display:none!important}
+.mobile-sticky-cta{position:fixed;z-index:90;right:0;bottom:0;left:0;display:flex;justify-content:center;padding:10px max(14px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));border-top:1px solid rgba(15,43,70,.12);background:rgba(255,255,255,.96);box-shadow:0 -12px 30px rgba(7,21,34,.16);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.mobile-sticky-cta a{width:min(100%,520px);min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;background:linear-gradient(135deg,var(--orange),var(--orange-dark));color:#fff;font-weight:850;box-shadow:0 8px 20px rgba(234,88,12,.28)}
+.mobile-sticky-cta a:hover{background:var(--orange-dark)}
+.mobile-sticky-cta a:focus-visible{outline:3px solid var(--navy);outline-offset:3px}
+.mobile-sticky-cta-spacer{height:calc(68px + env(safe-area-inset-bottom))}
+@media(min-width:761px){.mobile-sticky-cta,.mobile-sticky-cta-spacer{display:none!important}}
