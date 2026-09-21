@@ -14,10 +14,17 @@ function isSafeText(value: unknown, maxLength: number): value is string {
 // Closed public contract: no coercion, nested values or undocumented fields.
 // Inactive or unrecognized responses must never expose contact information.
 export function parseActiveTerritoryContact(input: unknown): ActiveTerritoryContact | null {
-  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
-  const value = input as Record<string, unknown>;
+  if (!input || typeof input !== "object" || Array.isArray(input) || Object.getPrototypeOf(input) !== Object.prototype) return null;
   const required = ["active", "department", "display_name", "phone_e164", "phone_display", "hours"];
-  if (Reflect.ownKeys(value).length !== required.length || !required.every((key) => Object.hasOwn(value, key))) return null;
+  const ownKeys = Reflect.ownKeys(input);
+  if (ownKeys.length !== required.length || !ownKeys.every((key) => typeof key === "string" && required.includes(key))) return null;
+  const descriptors = Object.getOwnPropertyDescriptors(input);
+  const value: Record<string, unknown> = {};
+  for (const key of required) {
+    const descriptor = descriptors[key];
+    if (!descriptor?.enumerable || !Object.hasOwn(descriptor, "value")) return null;
+    value[key] = descriptor.value;
+  }
   if (value.active !== true || value.department !== "67") return null;
   if (!isSafeText(value.display_name, 100) || value.display_name !== "Alsace Recycle") return null;
   if (typeof value.phone_e164 !== "string" || value.phone_e164.length !== 12 || !/^\+33[1-9]\d{8}$/.test(value.phone_e164)) return null;

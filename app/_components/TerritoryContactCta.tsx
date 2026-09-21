@@ -19,6 +19,7 @@ export function TerritoryContactCta({ departmentCode, placement }: Props) {
       try {
         const response = await fetch("/api/territory-contact?department=67", {
           credentials: "omit",
+          referrerPolicy: "no-referrer",
           signal: controller.signal,
           headers: { accept: "application/json" },
         });
@@ -67,5 +68,6 @@ export function TerritoryContactCta({ departmentCode, placement }: Props) {
     <a className="button" href={`tel:${contact.phone_e164}`} onClick={trackPhoneClick}>Appeler Alsace Recycle <span>{contact.phone_display}</span></a>
     {contact.hours && <p className="territory-contact-hours">Horaires : {contact.hours}</p>}
     <a className="territory-contact-form" href={placement === "quote_form" ? "#quote-project" : "/devis"}>{placement === "quote_form" ? "Ou continuer le formulaire ci-dessous" : "Ou demander un devis par formulaire"}</a>
+    <p className="territory-contact-privacy">Le clic d’appel est mesuré de façon agrégée, sans cookie ni donnée saisie. <a href="/politique-confidentialite">Confidentialité</a></p>
   </aside>;
 }

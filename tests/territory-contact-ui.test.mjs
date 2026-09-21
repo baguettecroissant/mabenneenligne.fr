@@ -17,6 +17,7 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], "/api/territory-contact?department=67");
   assert.equal(calls[0][1].credentials, "omit");
+  assert.equal(calls[0][1].referrerPolicy, "no-referrer");
   assert.equal(view.tree().props["aria-label"], "Contact Alsace Recycle pour le Bas-Rhin");
   assert.equal(phoneLink(view).props.href, `tel:${activeContact.phone_e164}`);
   assert.equal(textContent(phoneLink(view)), `Appeler Alsace Recycle ${activeContact.phone_display}`);
@@ -24,6 +25,8 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
   assert.ok(textContent(view.tree()).includes(activeContact.hours));
   const alternative = elements(view.tree(), (node) => node.type === "a" && node.props.href === "/devis")[0];
   assert.ok(alternative, "The quote form remains an explicit alternative");
+  assert.match(textContent(view.tree()), /clic d’appel.*mesuré.*sans cookie.*donnée saisie/i);
+  assert.ok(elements(view.tree(), (node) => node.type === "a" && node.props.href === "/politique-confidentialite").length);
 });
 
 test("null hours hide the hours row and preserve the form alternative", async (t) => {

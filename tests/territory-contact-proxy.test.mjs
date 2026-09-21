@@ -84,6 +84,30 @@ test("shared parser rejects boxed primitives, coercions and noncanonical own key
   assert.equal(parseActiveTerritoryContact(Object.defineProperty({ ...activeContact }, "private", { value: "extra" })), null);
 });
 
+test("shared parser accepts only enumerable data properties on a plain object without invoking accessors", () => {
+  const { parseActiveTerritoryContact } = loadComponent("app/_lib/territory-contact.ts");
+  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create(null), activeContact)), null);
+  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create({ inherited: true }), activeContact)), null);
+
+  const hidden = { ...activeContact };
+  Object.defineProperty(hidden, "hours", { value: activeContact.hours, enumerable: false });
+  assert.equal(parseActiveTerritoryContact(hidden), null);
+
+  for (const key of Object.keys(activeContact)) {
+    let reads = 0;
+    const accessor = { ...activeContact };
+    Object.defineProperty(accessor, key, {
+      enumerable: true,
+      get() {
+        reads += 1;
+        return reads === 1 ? activeContact[key] : "attacker-controlled";
+      },
+    });
+    assert.equal(parseActiveTerritoryContact(accessor), null, key);
+    assert.equal(reads, 0, `${key} accessor must not be invoked`);
+  }
+});
+
 test("proxy permits exactly one department=67 parameter", async () => {
   const fetch = mock.method(globalThis, "fetch", async () => { throw new Error("Unexpected fetch"); });
   const { GET } = await route();
