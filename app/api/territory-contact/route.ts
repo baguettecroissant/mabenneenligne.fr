@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const response = await fetch(UPSTREAM, {
       headers: { accept: "application/json" },
       credentials: "omit",
-      redirect: "error",
+      redirect: "manual",
       cache: "no-store",
       signal: controller.signal,
     });

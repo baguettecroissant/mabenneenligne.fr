@@ -141,6 +141,7 @@ test("upstream errors and non-JSON responses fail closed without leaking details
   for (const reply of [
     () => { throw new Error("private upstream diagnostics"); },
     () => Response.json({ message: "private upstream diagnostics" }, { status: 503 }),
+    () => new Response(null, { status: 302, headers: { location: "https://attacker.invalid/" } }),
     () => new Response('{"active":true}', { headers: { "content-type": "text/plain" } }),
     () => new Response("<html>bad gateway</html>", { headers: { "content-type": "application/json" } }),
     () => Response.json({ active: false, department: "67", secret: "private" }),
@@ -163,7 +164,7 @@ test("inactive contact stays inactive and upstream request has no visitor header
   assert.equal(url, upstream);
   assert.deepEqual(Object.fromEntries(new Headers(options.headers)), { accept: "application/json" });
   assert.equal(options.credentials, "omit");
-  assert.equal(options.redirect, "error");
+  assert.equal(options.redirect, "manual", "Cloudflare Workers rejects redirect:error before making the subrequest");
   assert.equal(options.cache, "no-store");
   assert.ok(options.signal instanceof AbortSignal);
 });
