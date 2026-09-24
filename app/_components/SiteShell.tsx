@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { MobileStickyCta } from "./MobileStickyCta";
+import { MeasurementConsent, MeasurementPreferencesButton } from "./MeasurementConsent";
 import { ServicesMenu } from "./ServicesMenu";
 
 const services = [
@@ -39,7 +40,7 @@ export function Header() {
 export function Footer() {
   return (
     <footer className="site-footer"><div className="container footer-grid">
-      <div className="footer-brand"><Logo light /><p>La plateforme de location de benne en ligne en France.</p><a href="mailto:contact@mabenneenligne.fr">✉ contact@mabenneenligne.fr</a><div className="trust-pill">✓ Réponse par e-mail 6j/7</div></div>
+      <div className="footer-brand"><Logo light /><p>La plateforme de location de benne en ligne en France.</p><a href="mailto:contact@mabenneenligne.fr">✉ contact@mabenneenligne.fr</a><MeasurementPreferencesButton /><div className="trust-pill">✓ Réponse par e-mail 6j/7</div></div>
       <div><h3>Services</h3>{services.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}<Link href="/pro">Offre Pro</Link><Link href="/tarifs">Tarifs</Link></div>
       <div><h3>Zones locales</h3><Link href="/regions">Toutes les régions</Link><Link href="/departements">Tous les départements</Link><Link href="/notre-reseau">Notre réseau</Link><Link href="/devenir-partenaire">Devenir partenaire</Link><Link href="/contact">Contact</Link><Link href="/faq">FAQ</Link></div>
       <div><h3>Légal</h3><Link href="/mentions-legales">Mentions légales</Link><Link href="/cgu">CGV & CGU</Link><Link href="/politique-confidentialite">Confidentialité</Link><h3 className="footer-mini-title">Nos engagements</h3><span>Centres de traitement agréés</span><span>Transporteurs certifiés</span><span>Traçabilité des déchets</span></div>
@@ -47,7 +48,7 @@ export function Footer() {
   );
 }
 
-export function SiteShell({ children }: { children: ReactNode }) { return <><Header /><main>{children}</main><MobileStickyCta /><Footer /></>; }
+export function SiteShell({ children }: { children: ReactNode }) { return <><Header /><MeasurementConsent /><main>{children}</main><MobileStickyCta /><Footer /></>; }
 
 export function PageHero({ eyebrow, title, text, image, children }: { eyebrow?: string; title: ReactNode; text: string; image?: string; children?: ReactNode }) {
   return <section className={`page-hero ${image ? "page-hero-image" : ""}`} style={image ? { backgroundImage: `linear-gradient(90deg, rgba(11,29,46,.96) 0%, rgba(15,43,70,.82) 48%, rgba(15,43,70,.2) 100%), url(${image})` } : undefined}><div className="container"><div className="page-hero-copy">{eyebrow && <span className="eyebrow light">{eyebrow}</span>}<h1>{title}</h1><p>{text}</p>{children}</div></div></section>;

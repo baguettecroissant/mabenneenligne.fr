@@ -65,3 +65,16 @@
 .mobile-sticky-cta a:focus-visible{outline:3px solid var(--navy);outline-offset:3px}
 .mobile-sticky-cta-spacer{height:calc(68px + env(safe-area-inset-bottom))}
 @media(min-width:761px){.mobile-sticky-cta,.mobile-sticky-cta-spacer{display:none!important}}
+
+/* La mesure facultative reste dans le flux : aucun recouvrement des CTA. */
+.measurement-panel[hidden]{display:none!important}
+.measurement-panel{position:relative;box-sizing:border-box;width:min(100% - 28px,1180px);margin:12px auto;padding:14px 18px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#0f2b46;box-shadow:0 4px 14px rgba(7,21,34,.08)}
+.measurement-panel strong{display:block;font-size:.94rem}
+.measurement-panel p{margin:5px 0 11px;font-size:.82rem;line-height:1.5;color:#334155}
+.measurement-panel a{color:#0f2b46;text-decoration:underline}
+.measurement-actions{display:flex;flex-wrap:wrap;gap:9px}
+.measurement-actions button{min-height:44px;min-width:98px;padding:8px 18px;border:1px solid #94a3b8;border-radius:9px;background:white;color:#0f2b46;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer}
+.measurement-actions button[data-measurement-choice="granted"]{border-color:#9a3412;background:#9a3412;color:white}
+.measurement-actions button:focus-visible,.measurement-preferences-button:focus-visible,.measurement-panel a:focus-visible{outline:3px solid #fb923c;outline-offset:3px}
+.measurement-preferences-button{appearance:none;min-height:44px;padding:0;border:0;background:transparent;color:#cbd5e1;text-align:left;text-decoration:underline;cursor:pointer;font:inherit;font-size:.84rem}
+.measurement-preferences-button:hover{color:white}

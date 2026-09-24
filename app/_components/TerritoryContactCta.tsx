@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { parseActiveTerritoryContact, type ActiveTerritoryContact } from "../_lib/territory-contact";
+import { canMeasure, safeMeasurementPath } from "../_lib/phone-measurement";
 
 type Props = {
   departmentCode: string;
@@ -44,6 +45,7 @@ export function TerritoryContactCta({ departmentCode, placement }: Props) {
 
   function trackPhoneClick() {
     try {
+      if (!canMeasure()) return;
       // Keep the native tel navigation synchronous, even if tracking fails.
       void fetch("https://nhmvgsrwhjsjnpncpiaj.supabase.co/functions/v1/analytics-collect", {
         method: "POST",
@@ -53,7 +55,7 @@ export function TerritoryContactCta({ departmentCode, placement }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           domain: "mabenneenligne.fr",
-          pathname: window.location.pathname,
+          pathname: safeMeasurementPath(window.location.pathname),
           event_name: "territory_phone_click",
           event_detail: { source_site: "mabenneenligne.fr", department: "67", placement },
         }),

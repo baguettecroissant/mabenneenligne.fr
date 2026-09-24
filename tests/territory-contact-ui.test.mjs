@@ -128,9 +128,9 @@ test("contact loading times out after five seconds and ignores a late response",
   assert.equal(view.tree(), null);
 });
 
-test("phone click sends exactly the cookieless analytics allowlist without blocking navigation", async (t) => {
+test("consented phone click sends a safe page category without blocking navigation", async (t) => {
   const previousWindow = globalThis.window;
-  globalThis.window = { location: { pathname: "/location-benne/strasbourg-67000", search: "?email=private@example.test", hash: "#private" } };
+  globalThis.window = { location: { hostname: "mabenneenligne.fr", pathname: "/location-benne/private%40example.test", search: "?email=private@example.test", hash: "#private" }, localStorage: { getItem() { return JSON.stringify({ choice: "granted", timestamp: Date.now() }); } } };
   t.after(() => { globalThis.window = previousWindow; });
   for (const outcome of ["pending", "reject", "throw"]) {
     const calls = [];
@@ -157,11 +157,11 @@ test("phone click sends exactly the cookieless analytics allowlist without block
     assert.equal(options.keepalive, true);
     assert.deepEqual(JSON.parse(options.body), {
       domain: "mabenneenligne.fr",
-      pathname: "/location-benne/strasbourg-67000",
+      pathname: "/location-benne/",
       event_name: "territory_phone_click",
       event_detail: { source_site: "mabenneenligne.fr", department: "67", placement: "city_page" },
     });
-    for (const privateValue of [activeContact.phone_e164, activeContact.phone_display, activeContact.display_name, activeContact.hours, "private@example.test", "#private"]) {
+    for (const privateValue of [activeContact.phone_e164, activeContact.phone_display, activeContact.display_name, activeContact.hours, "private@example.test", "private%40example.test", "#private"]) {
       assert.ok(!options.body.includes(privateValue), `Analytics exclude ${privateValue}`);
     }
     await view.flushEffects();

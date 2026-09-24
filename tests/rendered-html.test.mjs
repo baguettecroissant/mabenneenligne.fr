@@ -233,10 +233,12 @@ test("privacy policy discloses the Bas-Rhin recipient and minimal cookieless pho
   assert.match(html, /exclusivement/);
   assert.match(html, /sans cookie/i);
   assert.match(html, /domaine/i);
-  assert.match(html, /chemin[^<.]*sans[^<.]*paramètre/i);
+  assert.match(html, /catégorie de page fixe/i);
+  assert.match(html, /chemin personnalisé/i);
+  assert.match(html, /accord explicite/i);
   assert.match(html, /département/i);
   assert.match(html, /emplacement/i);
-  assert.match(html, /sans[^<.]*numéro de téléphone/i);
+  assert.match(html, /Aucun numéro appelé/i);
 });
 
 test("searches the official city dataset for the quote autocomplete", async () => {
