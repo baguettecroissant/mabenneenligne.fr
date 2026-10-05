@@ -27,9 +27,9 @@ test("Bas-Rhin city page passes its data department to the CTA and preserves the
   assert.ok(elements(tree, (element) => element.type === Link && element.props.href === "/devis?ville=Strasbourg&codePostal=67000").length > 0);
 });
 
-test("other city pages omit the territorial CTA", async () => {
+test("other city pages pass their own department, the CTA staying empty without partner", async () => {
   const tree = await CityPage({ params: Promise.resolve({ slug: "paris-75001" }) });
-  assert.equal(contacts(tree).length, 0);
+  assert.deepEqual(contacts(tree).map((cta) => [cta.props.departmentCode, cta.props.departmentName]), [["75", "Paris"]]);
 });
 
 test("city CTA scope follows the explicit department code, not the city name, slug or postcode", async () => {
@@ -38,7 +38,7 @@ test("city CTA scope follows the explicit department code, not the city name, sl
     "../../_data/local/geo": { ...geo, getCity: () => ({ ...geo.getCity("strasbourg-67000"), department_code: "75" }) },
   });
   const tree = await Page({ params: Promise.resolve({ slug: "strasbourg-67000" }) });
-  assert.equal(contacts(tree).length, 0);
+  assert.deepEqual(contacts(tree).map((cta) => cta.props.departmentCode), ["75"]);
 });
 
 test("Bas-Rhin department page passes its data code to the CTA and preserves the quote form link", async () => {
@@ -50,9 +50,9 @@ test("Bas-Rhin department page passes its data code to the CTA and preserves the
   assert.ok(elements(tree, (element) => element.type === Link && element.props.href === "/devis?departement=67").length > 0);
 });
 
-test("other department pages omit the territorial CTA", async () => {
+test("other department pages pass their own code and name", async () => {
   const tree = await DepartmentPage({ params: Promise.resolve({ slug: "paris-75" }) });
-  assert.equal(contacts(tree).length, 0);
+  assert.deepEqual(contacts(tree).map((cta) => [cta.props.departmentCode, cta.props.departmentName]), [["75", "Paris"]]);
 });
 
 test("department CTA scope follows the explicit record code, not the route slug", async () => {
@@ -61,5 +61,5 @@ test("department CTA scope follows the explicit record code, not the route slug"
     "../../_data/local/geo": { ...geo, getDepartment: () => ({ ...geo.getDepartment("bas-rhin-67"), code: "75" }) },
   });
   const tree = await Page({ params: Promise.resolve({ slug: "bas-rhin-67" }) });
-  assert.equal(contacts(tree).length, 0);
+  assert.deepEqual(contacts(tree).map((cta) => cta.props.departmentCode), ["75"]);
 });

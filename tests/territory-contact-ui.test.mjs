@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { elements, loadComponent, mount, textContent } from "./helpers/component-harness.mjs";
-import { activeContact } from "./helpers/territory-fixture.mjs";
+import { activeContact, moselleContact } from "./helpers/territory-fixture.mjs";
 
 const component = () => loadComponent("app/_components/TerritoryContactCta.tsx").TerritoryContactCta;
 const phoneLink = (view) => elements(view.tree(), (node) => node.type === "a" && node.props.href?.startsWith("tel:"))[0];
 
-test("active 67 contact renders an accessible phone CTA, hours and form alternative", async (t) => {
+test("active department contact renders an accessible phone CTA, hours and form alternative", async (t) => {
   const calls = [];
   t.mock.method(globalThis, "fetch", async (...args) => { calls.push(args); return Response.json(activeContact); });
-  const view = mount(component(), { departmentCode: "67", placement: "city_page" });
+  const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "city_page" });
   t.after(() => view.unmount());
   assert.equal(view.tree(), null);
   await view.flushEffects();
@@ -18,10 +18,10 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
   assert.equal(calls[0][0], "/api/territory-contact?department=67");
   assert.equal(calls[0][1].credentials, "omit");
   assert.equal(calls[0][1].referrerPolicy, "no-referrer");
-  assert.equal(view.tree().props["aria-label"], "Contact Alsace Recycle pour le Bas-Rhin");
+  assert.equal(view.tree().props["aria-label"], "Contact Alsace Recycle — Bas-Rhin (67)");
   assert.equal(phoneLink(view).props.href, `tel:${activeContact.phone_e164}`);
   assert.equal(textContent(phoneLink(view)), `Appeler Alsace Recycle ${activeContact.phone_display}`);
-  assert.match(textContent(view.tree()), /Bas-Rhin uniquement/);
+  assert.match(textContent(view.tree()), /Bas-Rhin \(67\) uniquement/);
   assert.ok(textContent(view.tree()).includes(activeContact.hours));
   const alternative = elements(view.tree(), (node) => node.type === "a" && node.props.href === "/devis")[0];
   assert.ok(alternative, "The quote form remains an explicit alternative");
@@ -32,7 +32,7 @@ test("active 67 contact renders an accessible phone CTA, hours and form alternat
 test("null hours hide the hours row and preserve the form alternative", async (t) => {
   const contact = { ...activeContact, hours: null };
   t.mock.method(globalThis, "fetch", async () => Response.json(contact));
-  const view = mount(component(), { departmentCode: "67", placement: "quote_form" });
+  const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "quote_form" });
   t.after(() => view.unmount());
   await view.flushEffects();
   assert.ok(phoneLink(view));
@@ -49,7 +49,7 @@ test("inactive, error, malformed and mismatched responses never render", async (
     () => new Response(JSON.stringify(activeContact), { headers: { "content-type": "text/html" } }),
     () => Response.json({ ...activeContact, department: "68" }),
     () => Response.json({ ...activeContact, department: 67 }),
-    () => Response.json({ ...activeContact, display_name: "Another provider" }),
+    () => Response.json({ ...activeContact, display_name: " Alsace Recycle" }),
     () => Response.json({ ...activeContact, active: "true" }),
     () => Response.json({ ...activeContact, phone_e164: "+33102030405;ext=1" }),
     () => Response.json({ ...activeContact, phone_e164: 33102030405 }),
@@ -67,7 +67,7 @@ test("inactive, error, malformed and mismatched responses never render", async (
     }),
   ]) {
     const fetch = t.mock.method(globalThis, "fetch", reply);
-    const view = mount(component(), { departmentCode: "67", placement: "department_page" });
+    const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "department_page" });
     await view.flushEffects();
     assert.equal(view.tree(), null);
     view.unmount();
@@ -75,13 +75,13 @@ test("inactive, error, malformed and mismatched responses never render", async (
   }
 });
 
-test("other or missing department codes never fetch or render even with a 67 URL", async (t) => {
+test("missing or malformed department codes never fetch or render even with a 67 URL", async (t) => {
   const previousWindow = globalThis.window;
   globalThis.window = { location: { pathname: "/location-benne/strasbourg-67000", search: "?department=67" } };
   t.after(() => { globalThis.window = previousWindow; });
   const fetch = t.mock.method(globalThis, "fetch", async () => Response.json(activeContact));
-  for (const departmentCode of [undefined, "", "68", "75", "067", 67]) {
-    const view = mount(component(), { departmentCode, placement: "city_page" });
+  for (const departmentCode of [undefined, "", "067", "96", "6", 67]) {
+    const view = mount(component(), { departmentCode, departmentName: "Bas-Rhin", placement: "city_page" });
     await view.flushEffects();
     assert.equal(view.tree(), null);
     view.unmount();
@@ -89,17 +89,47 @@ test("other or missing department codes never fetch or render even with a 67 URL
   assert.equal(fetch.mock.callCount(), 0);
 });
 
+test("another department loads its own partner and never shows the contact of a different one", async (t) => {
+  const calls = [];
+  t.mock.method(globalThis, "fetch", async (url) => { calls.push(url); return Response.json(url.endsWith("=57") ? moselleContact : activeContact); });
+  const moselle = mount(component(), { departmentCode: "57", departmentName: "Moselle", placement: "department_page" });
+  t.after(() => moselle.unmount());
+  await moselle.flushEffects();
+  assert.equal(calls[0], "/api/territory-contact?department=57");
+  assert.equal(moselle.tree().props["aria-label"], "Contact AD Services — Moselle (57)");
+  assert.match(textContent(moselle.tree()), /Moselle \(57\) uniquement/);
+  assert.equal(phoneLink(moselle).props.href, `tel:${moselleContact.phone_e164}`);
+  assert.doesNotMatch(textContent(moselle.tree()), /Alsace Recycle|Bas-Rhin/);
+  const hautRhin = mount(component(), { departmentCode: "68", departmentName: "Haut-Rhin", placement: "city_page" });
+  t.after(() => hautRhin.unmount());
+  await hautRhin.flushEffects();
+  assert.equal(calls[1], "/api/territory-contact?department=68");
+  assert.equal(hautRhin.tree(), null, "A 67 contact returned for 68 is rejected");
+});
+
+test("a contact provided by the quote form is rendered without a second request", async (t) => {
+  const fetch = t.mock.method(globalThis, "fetch", async () => { throw new Error("Unexpected fetch"); });
+  const view = mount(component(), { departmentCode: "57", departmentName: "Moselle", placement: "quote_form", contact: moselleContact });
+  t.after(() => view.unmount());
+  await view.flushEffects();
+  assert.equal(phoneLink(view).props.href, `tel:${moselleContact.phone_e164}`);
+  assert.equal(fetch.mock.callCount(), 0);
+  const mismatch = mount(component(), { departmentCode: "68", departmentName: "Haut-Rhin", placement: "quote_form", contact: moselleContact });
+  t.after(() => mismatch.unmount());
+  assert.equal(mismatch.tree(), null);
+});
+
 test("changing territory immediately hides stale contact and cancels pending fetch", async (t) => {
   let resolve;
   let signal;
   t.mock.method(globalThis, "fetch", (_url, options) => {
-    signal = options.signal;
-    return new Promise((done) => { resolve = done; });
+    signal ??= options.signal;
+    return new Promise((done) => { resolve ??= done; });
   });
-  const view = mount(component(), { departmentCode: "67", placement: "city_page" });
+  const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "city_page" });
   t.after(() => view.unmount());
   await view.flushEffects();
-  view.rerender({ departmentCode: "68", placement: "city_page" });
+  view.rerender({ departmentCode: "68", departmentName: "Haut-Rhin", placement: "city_page" });
   assert.equal(view.tree(), null);
   await view.flushEffects();
   assert.ok(signal.aborted);
@@ -116,7 +146,7 @@ test("contact loading times out after five seconds and ignores a late response",
     signal = options.signal;
     return new Promise((done) => { resolve = done; });
   });
-  const view = mount(component(), { departmentCode: "67", placement: "city_page" });
+  const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "city_page" });
   t.after(() => view.unmount());
   await view.flushEffects();
   t.mock.timers.tick(4999);
@@ -141,7 +171,7 @@ test("consented phone click sends a safe page category without blocking navigati
       if (outcome === "reject") return Promise.reject(new Error("offline"));
       return new Promise(() => {});
     });
-    const view = mount(component(), { departmentCode: "67", placement: "city_page" });
+    const view = mount(component(), { departmentCode: "67", departmentName: "Bas-Rhin", placement: "city_page" });
     await view.flushEffects();
     let prevented = false;
     const result = phoneLink(view).props.onClick({ preventDefault() { prevented = true; } });

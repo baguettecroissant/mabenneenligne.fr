@@ -2,7 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { TerritoryContactCta } from "./TerritoryContactCta";
+import { TerritoryContactCta, useTerritoryContact } from "./TerritoryContactCta";
 
 type SelectedCity = {
   name: string;
@@ -103,9 +103,11 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [selectedCity, setSelectedCity] = useState<SelectedCity | null>(initialCity ?? null);
-  const exclusiveTerritory = selectedCity?.departmentCode === "67";
-  const recipientNotice = exclusiveTerritory
-    ? "Votre demande est transmise exclusivement à Alsace Recycle pour le Bas-Rhin (67)."
+  // The partner is named only once its exclusivity for this exact department is confirmed live.
+  const territoryContact = useTerritoryContact(selectedCity?.departmentCode);
+  const exclusiveTerritory = Boolean(selectedCity && territoryContact);
+  const recipientNotice = selectedCity && territoryContact
+    ? `Votre demande est transmise exclusivement à ${territoryContact.display_name}, partenaire exclusif pour le département ${selectedCity.departmentName} (${selectedCity.departmentCode}).`
     : "Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis";
   const [data, setData] = useState<QuoteData>({ typeClient: "particulier", typeDechet: "", volume: "", dateLivraison: "", dateRetrait: "", prenom: "", nom: "", telephone: "", email: "", adresse: "", societe: "", message: "", consent: false, website: "" });
   const change = <K extends keyof QuoteData>(name: K, value: QuoteData[K]) => setData((current) => ({ ...current, [name]: value }));
@@ -154,7 +156,7 @@ export function QuoteForm({ initialCity }: { initialCity?: SelectedCity }) {
         <header><span>Étape 1 sur 2</span><h2>Décrivez votre besoin</h2><p>Ces éléments permettent de solliciter le bon transporteur avec un tarif cohérent.</p></header>
         <fieldset><legend>Vous êtes</legend><div className="profile-switch"><button type="button" aria-pressed={data.typeClient === "particulier"} className={data.typeClient === "particulier" ? "selected" : ""} onClick={() => change("typeClient", "particulier")}><span>♙</span><strong>Particulier</strong></button><button type="button" aria-pressed={data.typeClient === "professionnel"} className={data.typeClient === "professionnel" ? "selected" : ""} onClick={() => change("typeClient", "professionnel")}><span>▤</span><strong>Professionnel</strong></button></div></fieldset>
         <fieldset><legend>Lieu de livraison <b>*</b></legend><CityAutocomplete initialCity={initialCity} onSelect={setSelectedCity} /></fieldset>
-        {exclusiveTerritory && <TerritoryContactCta departmentCode={selectedCity.departmentCode} placement="quote_form" />}
+        {selectedCity && territoryContact && <TerritoryContactCta departmentCode={selectedCity.departmentCode} departmentName={selectedCity.departmentName} placement="quote_form" contact={territoryContact} />}
         <fieldset id="quote-project" tabIndex={-1}><legend>Type de déchet <b>*</b></legend><div className="waste-choice-grid">{wasteOptions.map((option) => <button type="button" aria-pressed={data.typeDechet === option.value} className={data.typeDechet === option.value ? "selected" : ""} key={option.value} onClick={() => change("typeDechet", option.value)}><span>{option.icon}</span><strong>{option.label}</strong><small>{option.detail}</small></button>)}</div></fieldset>
         <fieldset><legend>Volume estimé <b>*</b></legend><div className="volume-choice-grid">{volumeOptions.map(([value, label]) => <button type="button" aria-pressed={data.volume === value} className={data.volume === value ? "selected" : ""} key={value} onClick={() => change("volume", value)}><strong>{value === "a-definir" ? "?" : `${value} m³`}</strong><small>{label}</small></button>)}</div><p className="field-help">Un doute ? <Link href="/guides/choisir-taille-benne">Consultez notre guide des volumes →</Link></p></fieldset>
         {error && <p className="quote-error" role="alert">{error}</p>}

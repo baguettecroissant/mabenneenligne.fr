@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, mock, test } from "node:test";
-import { activeContact } from "./helpers/territory-fixture.mjs";
+import { activeContact, moselleContact } from "./helpers/territory-fixture.mjs";
 import { loadComponent } from "./helpers/component-harness.mjs";
 
 const closed = { active: false, department: "67" };
+const rejected = { active: false, department: "" };
 const endpoint = "https://mabenneenligne.fr/api/territory-contact";
 const upstream = "https://prix-location-benne.fr/api/public/territory-contact?department=67";
 const route = async () => loadComponent("app/api/territory-contact/route.ts");
@@ -44,16 +45,16 @@ test("valid active contact has exact public fields and a short cache with no sta
 
 test("strict schema rejects missing or extra fields, coercions, unsafe text and malformed or mismatched French numbers", async () => {
   const { GET } = await route();
-  const invalid = [null, [], "active", 67, true, {}, { ...activeContact, extra: "private" }, { ...activeContact, department: "68" }, { ...activeContact, active: "true" }, { ...activeContact, display_name: "Someone else" }];
+  const invalid = [null, [], "active", 67, true, {}, { ...activeContact, extra: "private" }, { ...activeContact, department: "68" }, { ...activeContact, active: "true" }];
   for (const key of Object.keys(activeContact)) {
     invalid.push(Object.fromEntries(Object.entries(activeContact).filter(([field]) => field !== key)));
     for (const value of [null, {}, [], true, false, 67, 0, "true", ""]) {
-      if (value !== activeContact[key] && !(key === "hours" && (value === null || value === "true"))) invalid.push({ ...activeContact, [key]: value });
+      if (value !== activeContact[key] && !(key === "hours" && (value === null || value === "true")) && !(key === "display_name" && value === "true")) invalid.push({ ...activeContact, [key]: value });
     }
   }
   for (const phone_e164 of ["0102030405", "+00102030405", "+33010203040", "+3310203040", "+331020304050", "+44102030405", "+33 1 02 03 04 05", "tel:+33102030405", "+1234567890123456", "+33102030405\n", " +33102030405", "+33102030405;ext=1"]) invalid.push({ ...activeContact, phone_e164 });
   for (const phone_display of ["01 02 03 04 06", "02 02 03 04 05", "0102030405", "+33102030405", "01 02 03 04", "01 02 03 04 050", "01  02 03 04 05", "01\t02 03 04 05", "01\u00a002 03 04 05", "01 02 03 04 05\n", " 01 02 03 04 05", "01 02 03 04 05;ext=1", "<01 02 03 04 05>"]) invalid.push({ ...activeContact, phone_display });
-  for (const display_name of ["", " ", "Alsace Recycle ", "alsace recycle", "x".repeat(101), "Alsace\nRecycle", "<Alsace Recycle>"]) invalid.push({ ...activeContact, display_name });
+  for (const display_name of ["", " ", "Alsace Recycle ", " Alsace Recycle", "x".repeat(101), "Alsace\nRecycle", "<Alsace Recycle>"]) invalid.push({ ...activeContact, display_name });
   for (const hours of ["", " ", "x".repeat(201), "<script>bad</script>"]) invalid.push({ ...activeContact, hours });
   for (const code of [...Array.from({ length: 32 }, (_, index) => index), ...Array.from({ length: 33 }, (_, index) => index + 127)]) {
     invalid.push({ ...activeContact, hours: `8 h${String.fromCharCode(code)}17 h` });
@@ -73,25 +74,28 @@ test("shared parser rejects boxed primitives, coercions and noncanonical own key
   const coerce = () => { throw new Error("Contact fields must never be coerced"); };
   for (const key of Object.keys(activeContact)) {
     for (const value of [undefined, Object(activeContact[key]), Symbol("private"), 67n, coerce, { toString: coerce, valueOf: coerce }]) {
-      assert.equal(parseActiveTerritoryContact({ ...activeContact, [key]: value }), null, key);
+      assert.equal(parseActiveTerritoryContact({ ...activeContact, [key]: value }, "67"), null, key);
     }
     const inherited = { ...activeContact };
     delete inherited[key];
     Object.setPrototypeOf(inherited, { [key]: activeContact[key] });
-    assert.equal(parseActiveTerritoryContact(inherited), null, key);
+    assert.equal(parseActiveTerritoryContact(inherited, "67"), null, key);
   }
-  assert.equal(parseActiveTerritoryContact({ ...activeContact, [Symbol("private")]: "extra" }), null);
-  assert.equal(parseActiveTerritoryContact(Object.defineProperty({ ...activeContact }, "private", { value: "extra" })), null);
+  assert.equal(parseActiveTerritoryContact({ ...activeContact, [Symbol("private")]: "extra" }, "67"), null);
+  assert.equal(parseActiveTerritoryContact(Object.defineProperty({ ...activeContact }, "private", { value: "extra" }), "67"), null);
+  assert.deepEqual(parseActiveTerritoryContact({ ...activeContact }, "67"), activeContact);
+  assert.equal(parseActiveTerritoryContact({ ...activeContact }, "68"), null);
+  assert.equal(parseActiveTerritoryContact({ ...activeContact }, "067"), null);
 });
 
 test("shared parser accepts only enumerable data properties on a plain object without invoking accessors", () => {
   const { parseActiveTerritoryContact } = loadComponent("app/_lib/territory-contact.ts");
-  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create(null), activeContact)), null);
-  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create({ inherited: true }), activeContact)), null);
+  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create(null), activeContact), "67"), null);
+  assert.equal(parseActiveTerritoryContact(Object.assign(Object.create({ inherited: true }), activeContact), "67"), null);
 
   const hidden = { ...activeContact };
   Object.defineProperty(hidden, "hours", { value: activeContact.hours, enumerable: false });
-  assert.equal(parseActiveTerritoryContact(hidden), null);
+  assert.equal(parseActiveTerritoryContact(hidden, "67"), null);
 
   for (const key of Object.keys(activeContact)) {
     let reads = 0;
@@ -103,18 +107,29 @@ test("shared parser accepts only enumerable data properties on a plain object wi
         return reads === 1 ? activeContact[key] : "attacker-controlled";
       },
     });
-    assert.equal(parseActiveTerritoryContact(accessor), null, key);
+    assert.equal(parseActiveTerritoryContact(accessor, "67"), null, key);
     assert.equal(reads, 0, `${key} accessor must not be invoked`);
   }
 });
 
-test("proxy permits exactly one department=67 parameter", async () => {
+test("proxy forwards one valid department code to the central contract", async () => {
+  const fetch = mock.method(globalThis, "fetch", async (url) => Response.json(url.endsWith("=57") ? moselleContact : activeContact));
+  const { GET } = await route();
+  const moselle = await GET(new Request(endpoint + "?department=57"));
+  assert.deepEqual(await moselle.json(), moselleContact);
+  assert.equal(fetch.mock.calls[0].arguments[0], "https://prix-location-benne.fr/api/public/territory-contact?department=57");
+  const mismatch = await GET(new Request(endpoint + "?department=68"));
+  assert.deepEqual(await mismatch.json(), { active: false, department: "68" }, "A contact of another department is never relayed");
+  assert.equal(mismatch.headers.get("cache-control"), "no-store");
+});
+
+test("proxy permits exactly one valid department parameter", async () => {
   const fetch = mock.method(globalThis, "fetch", async () => { throw new Error("Unexpected fetch"); });
   const { GET } = await route();
-  for (const query of ["", "?department=68", "?department=067", "?department=", "?department=67&department=67", "?department=67&department=68", "?department=67&extra=1", "?other=67", "?department=67%20"]) {
+  for (const query of ["", "?department=96", "?department=6", "?department=067", "?department=", "?department=67&department=67", "?department=67&department=68", "?department=67&extra=1", "?other=67", "?department=67%20"]) {
     const response = await GET(new Request(endpoint + query));
     assert.equal(response.status, 400, query);
-    assert.deepEqual(await response.json(), closed);
+    assert.deepEqual(await response.json(), rejected);
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
   assert.equal(fetch.mock.callCount(), 0);
@@ -128,7 +143,7 @@ test("proxy rejects unsupported methods without upstream access", async () => {
     const response = await handlers[method](new Request(endpoint + "?department=67", { method }));
     assert.equal(response.status, 405);
     assert.equal(response.headers.get("allow"), "GET");
-    assert.deepEqual(await response.json(), closed);
+    assert.deepEqual(await response.json(), rejected);
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
   const response = await handlers.GET(new Request(endpoint + "?department=67", { method: "POST" }));

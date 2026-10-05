@@ -26,11 +26,11 @@ test("built worker exposes the territory proxy with mocked upstream and rejects 
     const rejected = await request("/api/territory-contact?department=67", { method });
     assert.equal(rejected.status, 405, method);
     assert.equal(rejected.headers.get("allow"), "GET");
-    if (method !== "HEAD") assert.deepEqual(await rejected.json(), { active: false, department: "67" });
+    if (method !== "HEAD") assert.deepEqual(await rejected.json(), { active: false, department: "" });
   }
   const invalid = await request("/api/territory-contact?department=67&department=67");
   assert.equal(invalid.status, 400);
-  assert.deepEqual(await invalid.json(), { active: false, department: "67" });
+  assert.deepEqual(await invalid.json(), { active: false, department: "" });
   assert.equal(calls.length, 1);
 });
 async function render(path = "/") {
@@ -205,12 +205,12 @@ test("renders the complete two-step quote journey", async () => {
   assert.match(html, /Confidentialité/);
 });
 
-test("preselected Bas-Rhin quotes disclose the exclusive recipient in rendered HTML", async () => {
+test("preselected quotes never name a partner before its live contract is loaded in the browser", async () => {
   const response = await render("/devis?ville=Strasbourg&codePostal=67000");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Votre demande est transmise exclusivement à Alsace Recycle pour le Bas-Rhin \(67\)\./);
-  assert.doesNotMatch(html, /Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis/);
+  assert.match(html, /Données transmises uniquement à MaBenneEnLigne et aux partenaires nécessaires au devis/);
+  assert.doesNotMatch(html, /Alsace Recycle|tel:/);
   assert.match(html, /Continuer vers mes coordonnées/);
 });
 
@@ -224,12 +224,12 @@ test("generic and non-67 quotes retain the generic recipient notice", async () =
   }
 });
 
-test("privacy policy discloses the Bas-Rhin recipient and minimal cookieless phone click measurement", async () => {
+test("privacy policy discloses territorial exclusive recipients and minimal cookieless phone click measurement", async () => {
   const response = await render("/politique-confidentialite");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Alsace Recycle/);
-  assert.match(html, /Bas-Rhin \(67\)/);
+  assert.match(html, /exclusivité territoriale/);
+  assert.match(html, /nom est alors indiqué dans le formulaire/);
   assert.match(html, /exclusivement/);
   assert.match(html, /sans cookie/i);
   assert.match(html, /domaine/i);
