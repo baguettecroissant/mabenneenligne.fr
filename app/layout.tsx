@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.png", shortcut: "/favicon.png", apple: "/favicon.png" },
   openGraph: { type: "website", locale: "fr_FR", siteName: "MaBenneEnLigne", title: "MaBenneEnLigne", description: "Votre benne livrée en 24h, partout en France.", images: [{ url: "/og.png", width: 1792, height: 1024, alt: "MaBenneEnLigne — Votre benne livrée en 24h" }] },
   twitter: { card: "summary_large_image", title: "MaBenneEnLigne", description: "Votre benne livrée en 24h, partout en France.", images: ["/og.png"] },
+  verification: { other: { linkavista: "5ef06bc07529f576a672c2321ac78496d44b4073" } },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0F2B46" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="fr"><body>{children}</body></html>; }
